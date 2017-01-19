@@ -1,1 +1,3 @@
-I'm a README!
+# Samuel Chen
+## 109712789
+:FAVORITE_EMOJI: :rofl:
