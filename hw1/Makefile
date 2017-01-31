@@ -27,9 +27,11 @@ CFLAGS += $(STD)
 .PHONY: clean all info
 
 info: CFLAGS += $(INFOFLAGS)
+info: all
 
 debug: CFLAGS += $(DFLAGS)
 debug: all
+
 
 all: setup $(EXEC) $(TEST_EXEC)
 

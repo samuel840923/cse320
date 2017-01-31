@@ -5,6 +5,7 @@
 
 #include "const.h"
 
+
 /**
  * @brief Validates command line arguments passed to the program.
  * @details This function will validate all the arguments passed to the program
@@ -18,7 +19,25 @@
  * @return Refer to homework document for the return value of this function.
  */
 char validargs(int argc, char **argv, FILE **in, FILE **out);
-
+int size(char* s);
+int checkSecond(char* s);
+int parseInt(char* s);
+int alpha_size(char* s);
+int Substitution(int n,FILE** in,FILE** out);
+char FindC(char* orig, char c,int n);
+char* shfiting(char*s,int n);
+int Tutnese_encode(FILE** in, FILE** out);
+int equalIgCase(char fi,char se);
+char* findTUT(char c);
+int printTut(char* s, char c,FILE** out);
+int sizeTut(char** s);
+int Tutnese_decode(FILE** in, FILE** out);
+int isLetter(char c);
+char* searchTut(char*s);
+int cleanBuff(char* c);
+int checkDD(char* s);
+char toLowercase(char c);
+char* checkDT(char* s);
 
 #define USAGE(retcode) do{                                                        \
 fprintf(stderr, "%s\n",                                                           \
