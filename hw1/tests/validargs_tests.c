@@ -53,14 +53,14 @@ Test(ValidArgs_Suite, subs_decr){
 }
 
 Test(ValidArgs_Suite, subs_decr_n){
-    char *fake_args[] = {"program_name", "-s", "-e", "-", "-", "3452", NULL};
+    char *fake_args[] = {"program_name", "-s", "-d", "-", "-", "3452", NULL};
     FILE* in;
     FILE* out;
 
     char mode = validargs(6, fake_args, &in, &out);
 
     cr_assert_eq((mode & SUBS), SUBS, "Substitution bit wasn't set, got %s ", byte_to_binary(mode));
-    cr_assert_eq((mode & ENCR), 0, "Encoding bit wasn't set, got %s ", byte_to_binary(mode));
+    cr_assert_eq((mode & DECR), DECR, "Decoding bit wasn't set, got %s ", byte_to_binary(mode));
 
     int n = 3452;
 

@@ -36,7 +36,7 @@ fprintf(stderr, "%s\n",                                                         
 "    -t       Tutnese Translation\n"                                              \
 "             Additional parameters: [-e | -d]   INPUT_FILE OUTPUT_FILE\n"        \
 "                 -e          Encode into tutnese\n"                              \
-"                 -d          Decode from tutnese (extra credit)\n"               \
+"                 -d          Decode from tutnese\n"                              \
 "                 INPUT_FILE  This can be any file on the file system or '-'\n"   \
 "                             which specifies stdin\n"                            \
 "                 OUTPUT_FILE This can be any file on the system or '-'\n"        \
