@@ -33,6 +33,7 @@ int main(int argc, char **argv) {
     	command = c&result;
     	if(command == 32){//decode
     	    Substitution(n*-1,&in,&out);
+    	    printf("\n");
     	    info_shift(shfiting(Alphabet,n*-1));
     	 	info_amount(n);
  			info_input(inp);
@@ -42,6 +43,7 @@ int main(int argc, char **argv) {
     	}
     	else{ //encode
     		Substitution(n,&in,&out);
+    		printf("\n");
     		info_shift(shfiting(Alphabet,n));
     	 	info_amount(n);
  			info_input(inp);

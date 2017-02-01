@@ -202,6 +202,7 @@ while ((c = fgetc(*in))!=EOF){
 			c=c-32;
 		}
 		fputc(FindC(Alphabet,c,n),*out);
+		fflush(*out);
 }
 
 
