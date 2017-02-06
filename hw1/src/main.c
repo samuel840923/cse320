@@ -35,6 +35,14 @@ int main(int argc, char **argv) {
     	    Substitution(n*-1,&in,&out);
     	    printf("\n");
     	    info_shift(shfiting(Alphabet,n*-1));
+    	    if(argc == 5){
+    	    	n = 320;
+    	    }
+    	    else {
+    	    	 char* intt = *(argv+5);
+    	    	n = parseInt(intt);
+    	    }
+
     	 	info_amount(n);
  			info_input(inp);
  			info_out(outp);
@@ -44,6 +52,14 @@ int main(int argc, char **argv) {
     	else{ //encode
     		Substitution(n,&in,&out);
     		printf("\n");
+    		 if(argc == 5){
+    	    	n = 320;
+    	    }
+    	    else {
+    	    	 char* intt = *(argv+5);
+    	    	n = parseInt(intt);
+    	    }
+
     		info_shift(shfiting(Alphabet,n));
     	 	info_amount(n);
  			info_input(inp);
