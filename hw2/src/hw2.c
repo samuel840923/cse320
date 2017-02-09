@@ -21,7 +21,7 @@ void processDictionary(FILE* f){
         char* wdPtr = word;
         char line[MAX_SIZE];
         char* character = line;
-        char word_list[MAX_MISSPELLED_WORDS+1][MAX_SIZE];
+    //    char word_list[MAX_MISSPELLED_WORDS+1][MAX_SIZE];
         int counter = 0;
         int firstWord = 1;
 
@@ -29,15 +29,14 @@ void processDictionary(FILE* f){
         //if there isn't a space at the end of the line, put one there
         if((line[strlen(line)-2] != ' ' && line[strlen(line)-1] == '\n') || (line[strlen(line)-1] != ' ' && line[strlen(line)-1] != '\n'))
             strcat(line, " ");
-
-        while(*character != NULL)
+        while(*character != '\0')
         {
             if(counter >= MAX_MISSPELLED_WORDS+1)
                 break;
             //if the character is a space, add the word in word_list and make word NULL.
             if(*character == ' ')
             {
-                *wdPtr = NULL;
+                *wdPtr = '\0';
                 wdPtr = word;
                 if(firstWord)
                 {
@@ -48,7 +47,7 @@ void processDictionary(FILE* f){
                 }
                 else
                 {
-                    struct misspelled_word* currMisspelling;
+                    struct misspelled_word* currMisspelling = NULL;
                     if((currMisspelling = malloc(sizeof(struct misspelled_word))) == NULL)
                     {
                         printf("ERROR: OUT OF MEMORY.");
@@ -56,14 +55,18 @@ void processDictionary(FILE* f){
                     }
 
                     addMisspelledWord(currMisspelling, currWord, wdPtr);
+
                 }
             }
             //if the character isn't a space or a new line, add the character to word.
             else if(*character != '\n')
                 *(wdPtr++) = *character;
             character++;
+
         }
+
     }
+
 }
 
 void addWord(struct dict_word* dWord, char* word){
@@ -88,14 +91,27 @@ void addMisspelledWord(struct misspelled_word* misspelledWord, struct dict_word*
 void freeWords(struct dict_word* currWord){
     if(currWord != NULL)
     {
-        freeWords(currWord);
+        freeWords(currWord->next);
 
-        int i;
+
         //free word
         printf("FREED %s\n", currWord->word);
         free(currWord);
     }
 }
+void freeMiss(struct misspelled_word* currWord){
+    if(currWord != NULL)
+    {
+        freeMiss(currWord->next);
+
+
+        //free word
+
+        free(currWord);
+    }
+}
+
+
 
 void printWords(struct dict_word* currWord, FILE* f){
     if(currWord != NULL)
@@ -114,7 +130,7 @@ void printWords(struct dict_word* currWord, FILE* f){
         sprintf(line, "\tNUMBER OF MISSPELLINGS: %d\n", currWord->num_misspellings);
         fwrite(line, strlen(line)+1, 1, f);
 
-        for(i = 0; i<currWord->num_misspellings; i++)
+        for(i = 1; i<=currWord->num_misspellings; i++)
         {
             sprintf(line, "\tMISPELLED WORD #%d: %s\n", i,((currWord->misspelled)[i])->word);
             fwrite(line, strlen(line)+1, 1, f);
@@ -122,7 +138,7 @@ void printWords(struct dict_word* currWord, FILE* f){
             sprintf(line,"\t\tMISPELLED?: %d\n", ((currWord->misspelled)[i])->misspelled);
             fwrite(line, strlen(line)+1, 1, f);
 
-            sprintf(line, "\t\tACTUAL WORD: %s\n", ((currWord->misspelled)[i])->correct_word);
+            sprintf(line, "\t\tACTUAL WORD: %s\n", ((currWord->misspelled)[i])->word);
             fwrite(line, strlen(line)+1, 1, f);
 
             if(((currWord->misspelled)[i])->next->word != NULL)
@@ -160,7 +176,7 @@ void processWord(char* inputWord){
         if(conf == 'Y')
         {
             struct dict_word* newWord;
-            int counter = 0;
+           // int counter = 0;
 
             if((newWord = (struct dict_word*) malloc(sizeof(struct dict_word))) == NULL)
             {
@@ -222,7 +238,7 @@ bool foundMisspelledMatch(char* inputWord){
             listPtr->correct_word->misspelled_count++;
             return true;
         }
-        listPtr = listPtr--->next;
+        listPtr = listPtr->next;
     }
     return false;
 }
