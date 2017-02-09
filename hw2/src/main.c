@@ -1,6 +1,7 @@
 #include "hw2.h"
 #include <unistd.h>
-
+#include <stdio.h>
+#include <ctype.h>
 int main(int argc, char *argv[]){
 
 
@@ -38,9 +39,6 @@ int main(int argc, char *argv[]){
     FILE* oFile = DEFAULT_OUTPUT;
 
     char opt = '\0';
-
-
-
     for(i = 1; i< argc; i++)
     {
         char* currArg = argv[i];
@@ -64,10 +62,7 @@ int main(int argc, char *argv[]){
                 args.o = true;
                 oFile = fopen(currArg, "w");
             }
-            if(opt == 'h'){
-            	USAGE(EXIT_FAILURE);
-            	return EXIT_FAILURE;
-            }
+
             opt = '\0';
         }
         else
@@ -78,10 +73,27 @@ int main(int argc, char *argv[]){
                 opt = 'i';
             if(strcmp(currArg, "-o") == 0)
                 opt = 'o';
-            if(strcmp(currArg, "-h") == 0)
-                opt = 'h';
+
         }
     }
+    char flag ='\0';
+    int A =-1;
+    while((flag=getopt(argc,argv,"Ah012345i:o:d:"))!=-1){
+        switch(flag){
+            case 'A': A=0; break;
+            case '0': A = (10*A)+(flag-'0'); break;
+            case '1': A = (10*A)+(flag-'0'); break;
+            case '2': A = (10*A)+(flag-'0'); break;
+            case '3': A = (10*A)+(flag-'0'); break;
+            case '4': A = (10*A)+(flag-'0'); break;
+            case '5': A = (10*A)+(flag-'0'); break;
+            case 'h': USAGE(EXIT_SUCCESS); return EXIT_SUCCESS;
+            case '?': return EXIT_FAILURE;
+      }
+    }
+     if(A<-1||A>5){
+       return EXIT_FAILURE;
+     }
     dFile = fopen(args.dictFile, "r");
 
     if(iFile == NULL && args.i == true)
@@ -101,7 +113,7 @@ int main(int argc, char *argv[]){
     }
 
     strcpy(line,"\n--------INPUT FILE WORDS--------\n");
-    fwrite(line, strlen(line)+1, 1, oFile);
+   // fwrite(line, strlen(line)+1, 1, oFile);
 
     while(!feof(iFile))
     {
@@ -118,8 +130,9 @@ int main(int argc, char *argv[]){
         //replaces spaces within a line with new lines
         while(*character != '\0')
         {
-            if(*character == ' ' || *character == '\n')
+            if(*character ==' '||*character=='\n')
             {
+
                 /*char* punct = wdPtr-1;
                     printf("char:%c",punct);
                 while(!((*punct>='a' && *punct<='z') || (*punct>='A' && *punct<='Z')))
@@ -133,14 +146,29 @@ int main(int argc, char *argv[]){
                 *wdPtr = '\0';
                 wdPtr = word;
 
-                processWord(wdPtr);
+                processWord(wdPtr,3);
 
-                strcat(wdPtr, " ");
-                fwrite(wdPtr, strlen(wdPtr)+1, 1, oFile);
+                char* bePrint= foundMisspelled(wdPtr);
+                if(bePrint==NULL){
+                  bePrint =  findDict(wdPtr);
+                    if(bePrint==NULL){
+                        bePrint = wdPtr;
+                    }
+                }
+
+                printf("%s",bePrint);
+                while(*character != '\0'&&(!((*character>='a' && *character<='z') || (*character>='A' && *character<='Z')))){
+                    printf("%c",*character);
+                    character++;
+                }
+                character--;
+                //fprintf(oFile, "%s",bePrint);
+               // fwrite(wdPtr, strlen(wdPtr)+1, 1, oFile);
             }
             else
             {
-                *(wdPtr) = *character;
+                *(wdPtr) = tolower(*character);
+
                 wdPtr++;
             }
             character++;
@@ -148,11 +176,17 @@ int main(int argc, char *argv[]){
 
         if(iFile == stdin)
             break;
+        char check =getc(iFile);
+        if(check==-1)
+            break;
+        else
+            ungetc(check,iFile);
+
     }
 
     strcpy(line, "\n--------DICTIONARY WORDS--------\n");
-    fwrite(line, strlen(line)+1, 1, oFile);
-    printWords(dict->word_list , oFile);
+   // fwrite(line, strlen(line)+1, 1, oFile);
+  //  printWords(dict->word_list , oFile);
     freeWords(dict->word_list);
 
     //printf("\n--------FREED WORDS--------\n");

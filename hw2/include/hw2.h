@@ -110,7 +110,7 @@ void printWords(struct dict_word* word, FILE* f);
  *
  * @param      inputWord  The input word
  */
-void processWord(char* inputWord);
+void processWord(char* inputWord,int n);
 
 
 
@@ -135,3 +135,5 @@ bool foundMisspelledMatch(char* inputWord);
 bool foundDictMatch(char* inputWord);
 
 void freeMiss(struct misspelled_word* currWord);
+char* foundMisspelled(char* inputWord);
+char* findDict(char* inputWord);
