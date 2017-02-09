@@ -118,52 +118,32 @@ void printWords(struct dict_word* currWord, FILE* f){
     {
         printWords(currWord->next, f);
 
-        char line[MAX_SIZE];
+
         int i;
 
-        sprintf(line, "%s\n", currWord->word);
-        fwrite(line, strlen(line)+1, 1, f);
-
-        sprintf(line, "\tNUMBER OF TIMES WORD IS MISSPELLED: %d\n", currWord->misspelled_count); // puts string into buffer
-        fwrite(line, strlen(line)+1, 1, f);
-
-        sprintf(line, "\tNUMBER OF MISSPELLINGS: %d\n", currWord->num_misspellings);
-        fwrite(line, strlen(line)+1, 1, f);
+        fprintf(f, "%s ", currWord->word);
 
         for(i = 1; i<=currWord->num_misspellings; i++)
         {
-            sprintf(line, "\tMISPELLED WORD #%d: %s\n", i,((currWord->misspelled)[i])->word);
-            fwrite(line, strlen(line)+1, 1, f);
+            fprintf(f, "%s ",((currWord->misspelled)[i])->word);
 
-            sprintf(line,"\t\tMISPELLED?: %d\n", ((currWord->misspelled)[i])->misspelled);
-            fwrite(line, strlen(line)+1, 1, f);
 
-            sprintf(line, "\t\tACTUAL WORD: %s\n", ((currWord->misspelled)[i])->word);
-            fwrite(line, strlen(line)+1, 1, f);
-
-            if(((currWord->misspelled)[i])->next->word != NULL)
-            {
-                sprintf(line, "\t\tNEXT MISPELLED WORD: %s\n", ((currWord->misspelled)[i])->next->word);
-                fwrite(line, strlen(line)+1, 1, f);
-            }
         }
+         fprintf(f, "\n");
 
-        if((currWord->next)->word != NULL)
-        {
-            sprintf(line,"\tNEXT WORD: %s\n", (currWord->next)->word);
-            fwrite(line, strlen(line)+1, 1, f);
-        }
+
     }
 }
 
-void processWord(char* inputWord,int n){
+void processWord(char* inputWord,int n, int* check){
     if(foundMisspelledMatch(inputWord))
         return;
     if(foundDictMatch(inputWord))
         return;
     else
     {
-
+        if(n>0){
+          *check =1;
             struct dict_word* newWord;
            // int counter = 0;
 
@@ -188,7 +168,7 @@ void processWord(char* inputWord,int n){
                         return;
                     }
                     char* newMiss= *(setOfMiss);
-                    printf("%s\n",newMiss);
+
                     addMisspelledWord(newMWord, newWord, newMiss);
                     setOfMiss++;
                     numMisspellings--;
@@ -196,6 +176,7 @@ void processWord(char* inputWord,int n){
 
 
     }
+}
 }
 
 bool foundMisspelledMatch(char* inputWord){
@@ -246,4 +227,23 @@ char* findDict(char* inputWord){
         listPtr = listPtr->next;
     }
     return NULL;
+}
+int actualWord(char* c){
+
+    int size = strlen(c);
+    for(int i=size-1;i>0;i--){
+        if((c[i]>='a'&&c[i]<='z')||(c[i]>='A'&&c[i]<='Z')){
+            return i;
+        }
+    }
+    return -1;
+}
+int checkSlash(char*c){
+     int size = strlen(c);
+    for(int i=size-1;i>0;i--){
+        if(c[i]=='/'){
+            return i;
+        }
+    }
+    return -1;
 }

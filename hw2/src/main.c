@@ -2,6 +2,7 @@
 #include <unistd.h>
 #include <stdio.h>
 #include <ctype.h>
+
 int main(int argc, char *argv[]){
 
 
@@ -21,7 +22,7 @@ int main(int argc, char *argv[]){
         return EXIT_FAILURE;
     }
 
-
+    int dicChange=0;
 
     struct Args args;
     // Set struct default values
@@ -145,8 +146,14 @@ int main(int argc, char *argv[]){
 
                 *wdPtr = '\0';
                 wdPtr = word;
+                int length = strlen(wdPtr)-1;
+                int actual  = actualWord(wdPtr);
+                if(actual!=-1){
+                int offset = length-actual;
+                 wdPtr [actual+1]='\0';
 
-                processWord(wdPtr,3);
+                processWord(wdPtr,3,&dicChange);
+
 
                 char* bePrint= foundMisspelled(wdPtr);
                 if(bePrint==NULL){
@@ -156,12 +163,20 @@ int main(int argc, char *argv[]){
                     }
                 }
 
-                printf("%s",bePrint);
+                fprintf(oFile,"%s",bePrint);
+                for(int i=offset;i>0;i--){
+                    fprintf(oFile,"%c",*(character-i));
+                }
                 while(*character != '\0'&&(!((*character>='a' && *character<='z') || (*character>='A' && *character<='Z')))){
-                    printf("%c",*character);
+                    fprintf(oFile,"%c",*character);
                     character++;
                 }
                 character--;
+            }
+            else{
+                 fprintf(oFile,"%c",*character);
+            }
+
                 //fprintf(oFile, "%s",bePrint);
                // fwrite(wdPtr, strlen(wdPtr)+1, 1, oFile);
             }
@@ -185,8 +200,42 @@ int main(int argc, char *argv[]){
     }
 
     strcpy(line, "\n--------DICTIONARY WORDS--------\n");
-   // fwrite(line, strlen(line)+1, 1, oFile);
-  //  printWords(dict->word_list , oFile);
+
+   if(dicChange==1){
+    char DICT_FILE[MAX_SIZE];
+    char NEW_DICT[MAX_SIZE];
+    int checkslah = checkSlash(args.dictFile);
+    int length = strlen(args.dictFile);
+
+    DICT_FILE[0]='n';
+    DICT_FILE[1]='e';
+    DICT_FILE[2]='w';
+    DICT_FILE[3]='_';
+    int j=4;
+    for (int i=checkslah+1;i<length;i++){
+        DICT_FILE[j] = *(args.dictFile+i);
+        j++;
+    }
+     DICT_FILE[j]='\0';
+     int x=0;
+     for(int i=0;i<=checkslah;i++){
+        NEW_DICT[i]=*(args.dictFile+i);
+        x++;
+     }
+     int start =x;
+     int size = strlen(DICT_FILE);
+     for (int i=0;i<size;i++){
+         NEW_DICT[start+i]=DICT_FILE[i];
+         x++;
+     }
+     NEW_DICT[x]='\0';
+     char* newD = NEW_DICT;
+     printf("%s\n",newD );
+
+    FILE* newDict = fopen(newD, "w");
+  printWords(dict->word_list , newDict);
+   }
+
     freeWords(dict->word_list);
 
     //printf("\n--------FREED WORDS--------\n");

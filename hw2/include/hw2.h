@@ -1,3 +1,6 @@
+#ifndef HW2_H
+#define HW2_H
+
 #include <stdio.h>
 #include <stdlib.h>
 #include <string.h>
@@ -6,6 +9,8 @@
 #define MAX_SIZE 256
 #define WORDLENGTH 50
 #define MAX_MISSPELLED_WORDS 5
+
+
 
 #define USAGE(return_code) do { \
     fprintf(stderr, "%s\n", \
@@ -18,7 +23,6 @@
         "\t-d\tfor the dictionary filename, if omitted use default 'rsrc/dictionary.txt'\n" \
         "\t-An\tAutomatically add n (in range 0-5) random misspellings for any word not in the dictionary.\n"); \
 } while (0);
-
 
 
 FILE* DEFAULT_INPUT;
@@ -110,7 +114,7 @@ void printWords(struct dict_word* word, FILE* f);
  *
  * @param      inputWord  The input word
  */
-void processWord(char* inputWord,int n);
+void processWord(char* inputWord,int n,int*check);
 
 
 
@@ -137,3 +141,6 @@ bool foundDictMatch(char* inputWord);
 void freeMiss(struct misspelled_word* currWord);
 char* foundMisspelled(char* inputWord);
 char* findDict(char* inputWord);
+int actualWord(char* c);
+int checkSlash(char*c);
+#endif
