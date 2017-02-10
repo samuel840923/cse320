@@ -93,6 +93,7 @@ int main(int argc, char *argv[]){
       }
     }
      if(A<-1||A>5){
+        USAGE(EXIT_FAILURE);
        return EXIT_FAILURE;
      }
     dFile = fopen(args.dictFile, "r");
@@ -104,8 +105,8 @@ int main(int argc, char *argv[]){
     }
     if(dFile == NULL)
     {
-        printf("Unable to open: %s.\n", args.dictFile);
-         return EXIT_FAILURE;
+          USAGE(EXIT_FAILURE);
+       return EXIT_FAILURE;
     }
     else
     {
@@ -148,18 +149,28 @@ int main(int argc, char *argv[]){
                 wdPtr = word;
                 int length = strlen(wdPtr)-1;
                 int actual  = actualWord(wdPtr);
+                int front = frontCheck(wdPtr);
                 if(actual!=-1){
+                char WordAct[MAX_SIZE] ;
+                int counter =0;
+                for(int i=front;i<=actual;i++){
+                    WordAct[counter]= wdPtr[i];
+                    counter++;
+                }
                 int offset = length-actual;
-                 wdPtr [actual+1]='\0';
+                 WordAct[counter]='\0';
 
-                processWord(wdPtr,3,&dicChange);
+                processWord(WordAct,3,&dicChange);
 
+                for(int i=0;i<front;i++){
+                     fprintf(oFile,"%c",wdPtr[i]);
+                }
 
-                char* bePrint= foundMisspelled(wdPtr);
+                char* bePrint= foundMisspelled(WordAct);
                 if(bePrint==NULL){
-                  bePrint =  findDict(wdPtr);
+                  bePrint =  findDict(WordAct);
                     if(bePrint==NULL){
-                        bePrint = wdPtr;
+                        bePrint = WordAct;
                     }
                 }
 
@@ -167,11 +178,8 @@ int main(int argc, char *argv[]){
                 for(int i=offset;i>0;i--){
                     fprintf(oFile,"%c",*(character-i));
                 }
-                while(*character != '\0'&&(!((*character>='a' && *character<='z') || (*character>='A' && *character<='Z')))){
-                    fprintf(oFile,"%c",*character);
-                    character++;
-                }
-                character--;
+                 fprintf(oFile,"%c",*character);
+
             }
             else{
                  fprintf(oFile,"%c",*character);
@@ -235,7 +243,7 @@ int main(int argc, char *argv[]){
     FILE* newDict = fopen(newD, "w");
   printWords(dict->word_list , newDict);
    }
-
+   printStat(dict);
     freeWords(dict->word_list);
 
     //printf("\n--------FREED WORDS--------\n");

@@ -114,7 +114,7 @@ void printWords(struct dict_word* word, FILE* f);
  *
  * @param      inputWord  The input word
  */
-void processWord(char* inputWord,int n,int*check);
+void processWord(char* inputWord,int n,int* check);
 
 
 
@@ -143,4 +143,9 @@ char* foundMisspelled(char* inputWord);
 char* findDict(char* inputWord);
 int actualWord(char* c);
 int checkSlash(char*c);
+void printStat(struct dictionary* currWord);
+int countDictSize(struct dict_word* curr);
+int countMiss(struct dict_word* curr);
+int totalMiss(struct dict_word* curr);
+int frontCheck(char* c);
 #endif

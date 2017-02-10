@@ -146,7 +146,7 @@ void processWord(char* inputWord,int n, int* check){
           *check =1;
             struct dict_word* newWord;
            // int counter = 0;
-
+             dict->num_words++;
             if((newWord = (struct dict_word*) malloc(sizeof(struct dict_word))) == NULL)
             {
                 printf("ERROR: OUT OF MEMORY.\n");
@@ -247,3 +247,103 @@ int checkSlash(char*c){
     }
     return -1;
 }
+void printStat(struct dictionary* currWord){
+fprintf(stderr,"%s%d\n","Total number of words in dictionary: ",currWord->num_words);
+int dicS = countDictSize(currWord->word_list);
+dicS += sizeof(*currWord);
+fprintf(stderr, "%s%d\n", "Size of dictionary (in bytes): ",dicS);
+fprintf(stderr,"%s%d\n","Size of misspelled word list (in bytes): ",countMiss(currWord->word_list));
+fprintf(stderr,"%s%d\n","Total number of misspelled words: ",totalMiss(currWord->word_list));
+fprintf(stderr,"%s\n","Top 3 misspelled words:");
+
+struct dict_word* first =NULL;
+struct dict_word* second = NULL;
+struct dict_word* third=NULL;
+struct dict_word* curr = currWord->word_list;
+
+int top1 =0;
+int top2 =0;
+int top3 =0;
+while(curr!=NULL){
+int currentMax = curr->misspelled_count;
+
+if(currentMax>top1){
+    top3 = top2;
+    top2 = top1;
+
+    third = second;
+    second = first;
+
+    first = curr;
+    top1 = currentMax;
+}
+
+else if(currentMax>top2){
+    top3 = top2;
+
+    third = second;
+
+    second = curr;
+    top2 = currentMax;
+}
+
+else if(currentMax>top3){
+    third = curr;
+    top3 = currentMax;
+
+}
+
+curr = curr->next;
+}
+if(first!=NULL){
+printf("%s\n",first->word);
+}
+if(second!=NULL){
+    printf("%s\n",second->word);
+}
+if(third!=NULL){
+    printf("%s\n",third->word);
+}
+
+
+
+}
+int countDictSize(struct dict_word* curr){
+    int i=0;
+    while (curr!=NULL){
+        i=i+sizeof(*curr);
+        curr = curr->next;
+    }
+    return i;
+}
+int countMiss(struct dict_word* curr){
+
+ int all=0;
+    while (curr!=NULL){
+        int size = curr->num_misspellings;
+        for(int i=0;i<size;i++){
+           all+= sizeof(*(curr->misspelled[i]));
+        }
+ curr = curr->next;
+    }
+
+    return all;
+}
+int totalMiss(struct dict_word* curr){
+    int total =0;
+     while (curr!=NULL){
+        total += curr->misspelled_count;
+      curr = curr->next;
+    }
+    return total;
+}
+int frontCheck(char* c){
+    int size = strlen(c);
+    for (int i=0;i<size;i++){
+        if((c[i]>='a'&&c[i]<='z')||(c[i]>='A'&&c[i]<='Z'))
+            return i;
+    }
+    return -1;
+}
+
+
