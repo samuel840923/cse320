@@ -93,7 +93,7 @@ void freeWords(struct dict_word* currWord){
     {
         freeWords(currWord->next);
         //free word
-        printf("FREED %s\n", currWord->word);
+
         free(currWord);
     }
 }
@@ -150,10 +150,10 @@ void processWord(char* inputWord,int n, int* check){
             }
 
             addWord(newWord, inputWord);
-            dict->word_list = newWord;
-
+               dict->word_list = newWord;
+                int counter=0;
                 int numMisspellings=n;
-               char** setOfMiss =  gentypos(n, inputWord);
+               char** setOfMiss = gentypos(n, inputWord);
                 while(numMisspellings > 0)
                 {
                     struct misspelled_word* newMWord;
@@ -163,16 +163,17 @@ void processWord(char* inputWord,int n, int* check){
                         printf("ERROR: OUT OF MEMORY.");
                         return;
                     }
-                    char* newMiss= *(setOfMiss);
-
-
+                    char* newMiss= *(setOfMiss+counter);
                     addMisspelledWord(newMWord, newWord, newMiss);
-                    setOfMiss++;
+                    counter++;
                     numMisspellings--;
                 }
-
-
+                for(int i=0;i<n;i++){
+                    free(setOfMiss[i]);
+                }
+                free(setOfMiss);
     }
+
 }
 }
 
@@ -258,9 +259,9 @@ struct dict_word* second = NULL;
 struct dict_word* third=NULL;
 struct dict_word* curr = currWord->word_list;
 
-int top1 =0;
-int top2 =0;
-int top3 =0;
+int top1 =-1;
+int top2 =-1;
+int top3 =-1;
 while(curr!=NULL){
 int currentMax = curr->misspelled_count;
 

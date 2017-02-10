@@ -9,8 +9,11 @@ char** gentypos(int n, char* word) {
 		char nc = 97 + rand() % 26;
 		typos[n] = strdup(word);
 		typos[n][i] = nc;
-		if(!strcmp(word, typos[n]))
+		if(!strcmp(word, typos[n])){
 			free(typos[n++]);
+		}
+
 	}
+
 	return typos;
 }

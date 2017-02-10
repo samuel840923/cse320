@@ -39,7 +39,28 @@ int main(int argc, char *argv[]){
     FILE* iFile = DEFAULT_INPUT;
     FILE* oFile = DEFAULT_OUTPUT;
 
+
+ char flag ='\0';
+    int A =-1;
+    while((flag=getopt(argc,argv,"Ah012345i:o:d:"))!=-1){
+        switch(flag){
+            case 'A': A=0; break;
+            case '0': A = (10*A)+(flag-'0'); break;
+            case '1': A = (10*A)+(flag-'0'); break;
+            case '2': A = (10*A)+(flag-'0'); break;
+            case '3': A = (10*A)+(flag-'0'); break;
+            case '4': A = (10*A)+(flag-'0'); break;
+            case '5': A = (10*A)+(flag-'0'); break;
+            case 'h': USAGE(EXIT_SUCCESS); return EXIT_SUCCESS;
+            case '?': return EXIT_FAILURE;
+      }
+    }
+
+
+
+
     char opt = '\0';
+
     for(i = 1; i< argc; i++)
     {
         char* currArg = argv[i];
@@ -80,21 +101,7 @@ int main(int argc, char *argv[]){
             }
         }
     }
-    char flag ='\0';
-    int A =-1;
-    while((flag=getopt(argc,argv,"Ah012345i:o:d:"))!=-1){
-        switch(flag){
-            case 'A': A=0; break;
-            case '0': A = (10*A)+(flag-'0'); break;
-            case '1': A = (10*A)+(flag-'0'); break;
-            case '2': A = (10*A)+(flag-'0'); break;
-            case '3': A = (10*A)+(flag-'0'); break;
-            case '4': A = (10*A)+(flag-'0'); break;
-            case '5': A = (10*A)+(flag-'0'); break;
-            case 'h': USAGE(EXIT_SUCCESS); return EXIT_SUCCESS;
-            case '?': return EXIT_FAILURE;
-      }
-    }
+
      if(A<-1||A>5){
         USAGE(EXIT_FAILURE);
        return EXIT_FAILURE;
@@ -246,6 +253,7 @@ int main(int argc, char *argv[]){
 
     FILE* newDict = fopen(newD, "w");
   printWords(dict->word_list , newDict);
+  fclose(newDict);
    }
    printStat(dict);
     freeWords(dict->word_list);
