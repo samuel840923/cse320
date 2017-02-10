@@ -96,7 +96,7 @@ int main(int argc, char *argv[]){
             else if(strcmp(currArg, "-o") == 0)
                 opt = 'o';
             else if(*(currArg) != '-'){
-                printf("invlaid");
+
                 return EXIT_FAILURE;
             }
         }

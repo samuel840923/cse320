@@ -230,7 +230,7 @@ int actualWord(char* c){
 
     int size = strlen(c);
     for(int i=size-1;i>0;i--){
-        if((c[i]>='a'&&c[i]<='z')||(c[i]>='A'&&c[i]<='Z')){
+        if((c[i]>='a'&&c[i]<='z')||(c[i]>='A'&&c[i]<='Z')||(c[i]>='0'&&c[i]<='9')){
             return i;
         }
     }
@@ -377,7 +377,7 @@ int totalMiss(struct dict_word* curr){
 int frontCheck(char* c){
     int size = strlen(c);
     for (int i=0;i<size;i++){
-        if((c[i]>='a'&&c[i]<='z')||(c[i]>='A'&&c[i]<='Z'))
+        if((c[i]>='a'&&c[i]<='z')||(c[i]>='A'&&c[i]<='Z')||(c[i]>='0'&&c[i]<='9'))
             return i;
     }
     return -1;
