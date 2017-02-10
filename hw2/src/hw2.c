@@ -84,7 +84,7 @@ void addMisspelledWord(struct misspelled_word* misspelledWord, struct dict_word*
     misspelledWord->misspelled = 0;
     misspelledWord->correct_word = correctWord;
     misspelledWord->next = m_list;
-    (correctWord->misspelled)[++correctWord->num_misspellings] = misspelledWord;
+    (correctWord->misspelled)[correctWord->num_misspellings++] = misspelledWord;
     m_list = misspelledWord;
 }
 
@@ -92,8 +92,6 @@ void freeWords(struct dict_word* currWord){
     if(currWord != NULL)
     {
         freeWords(currWord->next);
-
-
         //free word
         printf("FREED %s\n", currWord->word);
         free(currWord);
@@ -118,15 +116,13 @@ void printWords(struct dict_word* currWord, FILE* f){
     {
         printWords(currWord->next, f);
 
-
         int i;
 
         fprintf(f, "%s ", currWord->word);
 
-        for(i = 1; i<=currWord->num_misspellings; i++)
+        for(i = 0; i<currWord->num_misspellings; i++)
         {
             fprintf(f, "%s ",((currWord->misspelled)[i])->word);
-
 
         }
          fprintf(f, "\n");
@@ -168,6 +164,7 @@ void processWord(char* inputWord,int n, int* check){
                         return;
                     }
                     char* newMiss= *(setOfMiss);
+
 
                     addMisspelledWord(newMWord, newWord, newMiss);
                     setOfMiss++;
@@ -296,13 +293,52 @@ else if(currentMax>top3){
 curr = curr->next;
 }
 if(first!=NULL){
-printf("%s\n",first->word);
+fprintf(stderr,"%s (%d times): ",first->word,first->misspelled_count);
+int size = first->num_misspellings;
+int f =1;
+for (int i=0;i<size;i++){
+
+  if((first->misspelled)[i]->misspelled==1){
+    if(f==0){
+        fprintf(stderr,"%s",", ");
+    }
+    f=0;
+    fprintf(stderr,"%s",(first->misspelled)[i]->word);
+    }
 }
+fprintf(stderr,"\n");
+}
+
 if(second!=NULL){
-    printf("%s\n",second->word);
+  fprintf(stderr,"%s (%d times): ",second->word,second->misspelled_count);
+int size = second->num_misspellings;
+int f =1;
+for (int i=0;i<size;i++){
+
+  if((second->misspelled)[i]->misspelled==1){
+    if(f==0){
+        fprintf(stderr,"%s",", ");
+    }
+    f=0;
+    fprintf(stderr,"%s",(second->misspelled)[i]->word);
+    }
+}
+fprintf(stderr,"\n");
 }
 if(third!=NULL){
-    printf("%s\n",third->word);
+   fprintf(stderr,"%s (%d times): ",third->word,third->misspelled_count);
+int size = third->num_misspellings;
+int f =1;
+for (int i=0;i<size;i++){
+
+  if((third->misspelled)[i]->misspelled==1){
+    if(f==0){
+        fprintf(stderr,"%s",", ");
+    }
+    f=0;
+    fprintf(stderr,"%s",(third->misspelled)[i]->word);
+    }
+}
 }
 
 

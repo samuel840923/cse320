@@ -70,11 +70,14 @@ int main(int argc, char *argv[]){
         {
             if(strcmp(currArg, "-d") == 0)
                 opt = 'd';
-            if(strcmp(currArg, "-i") == 0)
+            else if(strcmp(currArg, "-i") == 0)
                 opt = 'i';
-            if(strcmp(currArg, "-o") == 0)
+            else if(strcmp(currArg, "-o") == 0)
                 opt = 'o';
-
+            else if(*(currArg) != '-'){
+                printf("invlaid");
+                return EXIT_FAILURE;
+            }
         }
     }
     char flag ='\0';
@@ -114,7 +117,7 @@ int main(int argc, char *argv[]){
 
     }
 
-    strcpy(line,"\n--------INPUT FILE WORDS--------\n");
+    //strcpy(line,"\n--------INPUT FILE WORDS--------\n");
    // fwrite(line, strlen(line)+1, 1, oFile);
 
     while(!feof(iFile))
@@ -160,7 +163,7 @@ int main(int argc, char *argv[]){
                 int offset = length-actual;
                  WordAct[counter]='\0';
 
-                processWord(WordAct,3,&dicChange);
+                processWord(WordAct,A,&dicChange);
 
                 for(int i=0;i<front;i++){
                      fprintf(oFile,"%c",wdPtr[i]);
@@ -180,8 +183,9 @@ int main(int argc, char *argv[]){
                 }
                  fprintf(oFile,"%c",*character);
 
-            }
+                 }
             else{
+                 fprintf(oFile, "%s",wdPtr );
                  fprintf(oFile,"%c",*character);
             }
 
@@ -207,7 +211,7 @@ int main(int argc, char *argv[]){
 
     }
 
-    strcpy(line, "\n--------DICTIONARY WORDS--------\n");
+   // strcpy(line, "\n--------DICTIONARY WORDS--------\n");
 
    if(dicChange==1){
     char DICT_FILE[MAX_SIZE];
@@ -238,7 +242,7 @@ int main(int argc, char *argv[]){
      }
      NEW_DICT[x]='\0';
      char* newD = NEW_DICT;
-     printf("%s\n",newD );
+
 
     FILE* newDict = fopen(newD, "w");
   printWords(dict->word_list , newDict);
