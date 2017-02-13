@@ -10,7 +10,7 @@ void processDictionary(FILE* f){
         struct dict_word* currWord;
         if((currWord = (struct dict_word*) malloc(sizeof(struct dict_word))) == NULL)
         {
-            printf("OUT OF MEMORY.\n");
+            exit(EXIT_FAILURE);
             return;
         }
         currWord->num_misspellings = 0;
@@ -50,7 +50,7 @@ void processDictionary(FILE* f){
                     struct misspelled_word* currMisspelling = NULL;
                     if((currMisspelling = malloc(sizeof(struct misspelled_word))) == NULL)
                     {
-                        printf("ERROR: OUT OF MEMORY.");
+                        exit(EXIT_FAILURE);
                         return;
                     }
 
@@ -145,7 +145,7 @@ void processWord(char* inputWord,int n, int* check){
              dict->num_words++;
             if((newWord = (struct dict_word*) malloc(sizeof(struct dict_word))) == NULL)
             {
-                printf("ERROR: OUT OF MEMORY.\n");
+                exit(EXIT_FAILURE);
                 return;
             }
 
@@ -160,7 +160,7 @@ void processWord(char* inputWord,int n, int* check){
 
                     if((newMWord = (struct misspelled_word*) malloc(sizeof(struct misspelled_word))) == NULL)
                     {
-                        printf("ERROR: OUT OF MEMORY.");
+                        exit(EXIT_FAILURE);
                         return;
                     }
                     char* newMiss= *(setOfMiss+counter);

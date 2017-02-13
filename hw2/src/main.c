@@ -12,13 +12,13 @@ int main(int argc, char *argv[]){
     //create dictionary
     if((dict = (struct dictionary*) calloc(1,sizeof(struct dictionary))) == NULL)
     {
-        printf("ERROR: OUT OF MEMORY.\n");
+
         return EXIT_FAILURE;
     }
 
    if((m_list = (struct misspelled_word*) calloc(1,sizeof(struct misspelled_word))) == NULL)
     {
-        printf("ERROR: OUT OF MEMORY.\n");
+
         return EXIT_FAILURE;
     }
 
@@ -111,7 +111,7 @@ int main(int argc, char *argv[]){
 
     if(iFile == NULL && args.i == true)
     {
-        printf("Unable to open: %s.\n", args.input);
+        USAGE(EXIT_FAILURE);
         return EXIT_FAILURE;
     }
     if(dFile == NULL)
