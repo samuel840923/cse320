@@ -42,6 +42,7 @@ int main(int argc, char *argv[]){
 
  char flag ='\0';
     int A =-1;
+    opterr =0;
     while((flag=getopt(argc,argv,"Ah012345i:o:d:"))!=-1){
         switch(flag){
             case 'A': A=0; break;
@@ -52,7 +53,7 @@ int main(int argc, char *argv[]){
             case '4': A = (10*A)+(flag-'0'); break;
             case '5': A = (10*A)+(flag-'0'); break;
             case 'h': USAGE(EXIT_SUCCESS); return EXIT_SUCCESS;
-            case '?': return EXIT_FAILURE;
+            case '?':  return EXIT_FAILURE;
       }
     }
 
