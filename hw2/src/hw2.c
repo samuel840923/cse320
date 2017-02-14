@@ -19,7 +19,7 @@ void processDictionary(FILE* f){
         //variables
         char word[MAX_SIZE];
         char* wdPtr = word;
-        char line[MAX_SIZE];
+        char line[MAX_SIZE] ;
         char* character = line;
     //    char word_list[MAX_MISSPELLED_WORDS+1][MAX_SIZE];
         int counter = 0;
@@ -62,8 +62,12 @@ void processDictionary(FILE* f){
             else if(*character != '\n')
                 *(wdPtr++) = *character;
             character++;
-
-        }
+            }
+            char check =getc(f);
+        if(check==-1)
+            break;
+        else
+            ungetc(check,f);
 
     }
 
