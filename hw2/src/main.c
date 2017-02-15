@@ -18,7 +18,7 @@ int main(int argc, char *argv[]){
 
    if((m_list = (struct misspelled_word*) calloc(1,sizeof(struct misspelled_word))) == NULL)
     {
-
+        free(dict);
         return EXIT_FAILURE;
     }
 
@@ -262,8 +262,6 @@ int main(int argc, char *argv[]){
    }
    printStat(dict);
     freeWords(dict->word_list);
-
-    //printf("\n--------FREED WORDS--------\n");
     freeMiss(m_list);
 
     //free dictionary
