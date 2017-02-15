@@ -10,6 +10,10 @@ void processDictionary(FILE* f){
         struct dict_word* currWord;
         if((currWord = (struct dict_word*) malloc(sizeof(struct dict_word))) == NULL)
         {
+
+                         freeWords(dict->word_list);
+                         free(m_list);
+                        free(dict);
             exit(EXIT_FAILURE);
             return;
         }
@@ -50,6 +54,10 @@ void processDictionary(FILE* f){
                     struct misspelled_word* currMisspelling = NULL;
                     if((currMisspelling = malloc(sizeof(struct misspelled_word))) == NULL)
                     {
+
+                         freeWords(dict->word_list);
+                         freeMiss(m_list);
+                        free(dict);
                         exit(EXIT_FAILURE);
                         return;
                     }
@@ -149,6 +157,10 @@ void processWord(char* inputWord,int n, int* check){
              dict->num_words++;
             if((newWord = (struct dict_word*) malloc(sizeof(struct dict_word))) == NULL)
             {
+
+                          freeWords(dict->word_list);
+                            freeMiss(m_list);
+                            free(dict);
                 exit(EXIT_FAILURE);
                 return;
             }
@@ -164,6 +176,9 @@ void processWord(char* inputWord,int n, int* check){
 
                     if((newMWord = (struct misspelled_word*) malloc(sizeof(struct misspelled_word))) == NULL)
                     {
+                         freeWords(dict->word_list);
+                         freeMiss(m_list);
+                        free(dict);
                         exit(EXIT_FAILURE);
                         return;
                     }

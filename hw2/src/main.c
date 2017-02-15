@@ -52,7 +52,7 @@ int main(int argc, char *argv[]){
             case '3': A = (10*A)+(flag-'0'); break;
             case '4': A = (10*A)+(flag-'0'); break;
             case '5': A = (10*A)+(flag-'0'); break;
-            case 'h': USAGE(EXIT_SUCCESS); return EXIT_SUCCESS;
+            case 'h': USAGE(EXIT_SUCCESS); free(dict); free(m_list);return EXIT_SUCCESS;
             case '?':  return EXIT_FAILURE;
       }
     }
@@ -112,11 +112,15 @@ int main(int argc, char *argv[]){
     if(iFile == NULL && args.i == true)
     {
         USAGE(EXIT_FAILURE);
+        free(dict); free(m_list);
+        fclose(dFile);
         return EXIT_FAILURE;
     }
     if(dFile == NULL)
     {
           USAGE(EXIT_FAILURE);
+          free(dict); free(m_list);
+
        return EXIT_FAILURE;
     }
     else
