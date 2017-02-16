@@ -54,7 +54,7 @@ int main(int argc, char *argv[]){
             case '4': A = (10*A)+(flag-'0'); onlyA =0; break;
             case '5': A = (10*A)+(flag-'0'); onlyA =0; break;
             case 'h': USAGE(EXIT_SUCCESS); free(dict); free(m_list);return EXIT_SUCCESS;
-            case '?':  return EXIT_FAILURE;
+            case '?':  free(dict); free(m_list);return EXIT_FAILURE;
       }
     }
 
@@ -106,6 +106,7 @@ int main(int argc, char *argv[]){
 
      if(A<-1||A>5||onlyA==1){
         USAGE(EXIT_FAILURE);
+        free(dict); free(m_list);
        return EXIT_FAILURE;
      }
     dFile = fopen(args.dictFile, "r");
