@@ -42,16 +42,17 @@ int main(int argc, char *argv[]){
 
  char flag ='\0';
     int A =-1;
+    int onlyA =1;
     opterr =0;
     while((flag=getopt(argc,argv,"Ah012345i:o:d:"))!=-1){
         switch(flag){
             case 'A': A=0; break;
-            case '0': A = (10*A)+(flag-'0'); break;
-            case '1': A = (10*A)+(flag-'0'); break;
-            case '2': A = (10*A)+(flag-'0'); break;
-            case '3': A = (10*A)+(flag-'0'); break;
-            case '4': A = (10*A)+(flag-'0'); break;
-            case '5': A = (10*A)+(flag-'0'); break;
+            case '0': A = (10*A)+(flag-'0'); onlyA =0;break;
+            case '1': A = (10*A)+(flag-'0'); onlyA =0;break;
+            case '2': A = (10*A)+(flag-'0'); onlyA =0;break;
+            case '3': A = (10*A)+(flag-'0'); onlyA =0;break;
+            case '4': A = (10*A)+(flag-'0'); onlyA =0; break;
+            case '5': A = (10*A)+(flag-'0'); onlyA =0; break;
             case 'h': USAGE(EXIT_SUCCESS); free(dict); free(m_list);return EXIT_SUCCESS;
             case '?':  return EXIT_FAILURE;
       }
@@ -103,7 +104,7 @@ int main(int argc, char *argv[]){
         }
     }
 
-     if(A<-1||A>5){
+     if(A<-1||A>5||onlyA==1){
         USAGE(EXIT_FAILURE);
        return EXIT_FAILURE;
      }
