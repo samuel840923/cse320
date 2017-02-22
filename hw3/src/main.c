@@ -52,6 +52,7 @@
 
 int main(int argc, char *argv[]) {
     // Initialize the custom allocator
+
     sf_mem_init(MAX_HEAP_SIZE);
 
     // Tell the user about the fields
