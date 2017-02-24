@@ -78,12 +78,11 @@ void *sf_malloc(size_t size) {
 						return pt;
 						}
 
-						uint64_t bl = size+16+padding;
+						 uint64_t bl = size+16+padding;
 						 uint64_t  newDiff = (alloSize+blc)-bl;
-						  putBlock(pt,1,0,bl,size,0,padding);
 		    			void* freelist = NULL;
 		    			freelist = pt;
-		    			pt =((sf_header*)pt+1);
+
 		    // now create free list for the too big one
 
   						 uint64_t  move = size+16+padding;
@@ -91,7 +90,10 @@ void *sf_malloc(size_t size) {
 		  				  freelist =((sf_header*)freelist+move);
 		  					 bl = newDiff;
 		  			   putBlock(freelist,0,0,bl,0,0,0);
-		   			  insertFree(freelist);
+		  			   insertFree(freelist);
+		  			   	bl = size+16+padding;
+		  			   putBlock(pt,1,0,bl,size,0,padding);
+		   			   pt =((sf_header*)pt+1);
 						return pt;
 					}
 
@@ -105,7 +107,6 @@ void *sf_malloc(size_t size) {
 			checkstart=1;
 
 				putBlock(pt,1,0,size+padding+16,size,0,padding);
-
 				void* extraspace = pt;
 		 	    uint64_t  estimate = (unsigned long)sf_sbrk(0)-(unsigned long)pt;
 				totalsize+=estimate;
@@ -158,18 +159,18 @@ void *sf_malloc(size_t size) {
 		else{
 			uint64_t bl = expected;
 			 uint64_t  newDiff = newBlock-expected;
-			  putBlock(pt,1,0,bl,size,0,padding);
 		    void* freelist = NULL;
 		    freelist = pt;
-		    pt =((sf_header*)pt+1);
-		    // now create free list for the too big one
-
-  			 uint64_t  move = size+16+padding;
+		     uint64_t  move = size+16+padding;
 		    move = (move)/sizeof(sf_header);
 		    freelist =((sf_header*)freelist+move);
-		    bl = newDiff;
-		     putBlock(freelist,0,0,bl,0,0,0);
-		     insertFree(freelist);
+		    putBlock(freelist,0,0,newDiff,0,0,0);
+		       insertFree(freelist);
+		     putBlock(pt,1,0,bl,size,0,padding);
+		    pt =((sf_header*)pt+1);
+		    // now create free list for the too big on
+
+
 		}
 	}
 	return pt;
@@ -229,8 +230,8 @@ unsigned long currA = (unsigned long)p;
 while (curr!=NULL){
 	unsigned long currentA= (unsigned long)curr;
 	uint64_t capa = curr->header.block_size<<4;
-	unsigned long overlap= (unsigned long)curr+capa;
-	if(currentA<=currA&&currentA<overlap){
+	unsigned long overlap= currentA+capa;
+	if(currentA<=currA&&currA<overlap){
 		if(curr==freelist_head){
 			sf_free_header* newB = (sf_free_header*)p;
 			newB = (sf_free_header*)p;
@@ -256,9 +257,10 @@ while (curr!=NULL){
 			sf_free_header* newB = (sf_free_header*)p;
 			newB ->header = *(sf_header*)p;
 			newB->next = curr->next;
-			curr->next->prev =newB;
 			newB->prev = curr->prev;
-			curr->prev->next= newB;
+			curr->prev->next=newB;
+			curr->prev->next=newB;
+			curr->next->prev = newB;
 			return;
 		}
 	}
@@ -274,10 +276,11 @@ while (curr!=NULL){
 		else{
 			sf_free_header* newB = (sf_free_header*)p;
 			newB->header = *(sf_header*)p;
-			newB->next = curr->next;
-			curr->prev = newB;
-			curr->next = newB;
-			newB->prev = curr;
+			newB->next = curr;
+			newB->prev = curr->prev;
+			curr->prev->next = newB;
+			curr-> prev = newB;
+
 			return;
 		}
 
@@ -337,30 +340,41 @@ if((unsigned long) start ==((unsigned long)((sf_header*)ptr-1))){
 else{
 ptr =((sf_header*)ptr-1);
 if(checkRight(ptr)==1&&checkLeft(ptr)==1){
+uint64_t currblck = (*((sf_header*)ptr)).block_size<<4;
+uint64_t off = currblck/sizeof(sf_header);
+uint64_t nextblc = (*((sf_header*)ptr+off)).block_size<<4;
+removeFree(((sf_header*)ptr+off));
+uint64_t prevblck = (*((sf_header*)ptr-1)).block_size<<4;
+off = prevblck/sizeof(sf_header);
+uint64_t total = currblck+prevblck+nextblc;
+ptr = ((sf_header*)ptr-off);
+removeFree(ptr);
+putBlock(ptr,0,0,total,0,0,0);
+insertFree(ptr);
 
 
 }
 else if(checkRight(ptr)==1){
-uint64_t blck = (*(sf_header*)ptr).block_size;
+uint64_t blck = (*(sf_header*)ptr).block_size<<4;
 uint64_t off = blck/sizeof(sf_header);
-uint64_t nxtB = (*((sf_header*)ptr+off)).block_size;
+uint64_t nxtB = (*((sf_header*)ptr+off)).block_size<<4;
 putBlock(ptr,0,0,blck+nxtB,0,0,0);
 removeFree((sf_header*)ptr+off);
 insertFree(ptr);
 }
 else if(checkLeft(ptr)==1){
-uint64_t currblck = (*((sf_footer*)ptr)).block_size;
-uint64_t prevblck = (*((sf_footer*)ptr-2)).block_size;
+uint64_t currblck = (*((sf_footer*)ptr)).block_size<<4;
+uint64_t prevblck = (*((sf_footer*)ptr-2)).block_size<<4;
 uint64_t off = prevblck/sizeof(sf_header);
-removeFree(ptr);
 ptr =((sf_header*)ptr-off);
+removeFree(ptr);
 putBlock(ptr,0,0,currblck+prevblck,0,0,0);
 insertFree(ptr);
 
 
 }
 else {
-	uint64_t block_size = (*(sf_header*)ptr).block_size;
+	uint64_t block_size = (*(sf_header*)ptr).block_size<<4;
 	putBlock(ptr,0,0,block_size,0,0,0);
 	insertFree(ptr);
 }
@@ -387,7 +401,7 @@ else {
 }
 int checkRight(void* pt){
 
-uint64_t blck = (*(sf_header*)pt).block_size;
+uint64_t blck = (*(sf_header*)pt).block_size<<4;
 uint64_t off = blck/sizeof(sf_header);
 if((unsigned long) sf_sbrk(0) ==((unsigned long)((sf_header*)pt+off)))
 return 0;
