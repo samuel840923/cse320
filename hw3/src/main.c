@@ -52,27 +52,21 @@
 
 int main(int argc, char *argv[]) {
     // Initialize the custom allocator
-
     sf_mem_init(MAX_HEAP_SIZE);
 
     // Tell the user about the fields
     info("Initialized heap with %dmb of heap space.\n", MAX_HEAP_SIZE >> 20);
-   // press_to_cont();
+    press_to_cont();
 
     // Print out title for first test
     printf("=== Test1: Allocation test ===\n");
     // Test #1: Allocate an integer
-    int *value1 = sf_malloc(sizeof(short));
-    int *value5 = sf_malloc(sizeof(short));
-    sf_free(value1);
-
-    null_check(value1, sizeof(4070));
+    int *value1 = sf_malloc(sizeof(int));
+    null_check(value1, sizeof(int));
     payload_check(value1);
     // Print out the allocator block
-    sf_varprint(value1);
-    sf_varprint(value5);
-    sf_snapshot(true);
-   press_to_cont();
+    sf_blockprint(value1);
+    press_to_cont();
 
     // Now assign a value
     printf("=== Test2: Assignment test ===\n");
@@ -89,11 +83,10 @@ int main(int argc, char *argv[]) {
     null_check(value2, sizeof(long));
     payload_check(value2);
     // Assign a value
-    sf_varprint(value2);
     *value2 = VALUE2_VALUE;
     // Check value
     check_prim_contents(value2, VALUE2_VALUE, "%ld", "value2");
-  press_to_cont();
+    press_to_cont();
 
     printf("=== Test4: does value1 still equal %d ===\n", VALUE1_VALUE);
     check_prim_contents(value1, VALUE1_VALUE, "%d", "value1");
