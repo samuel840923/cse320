@@ -8,6 +8,7 @@
 #include <stdlib.h>
 #include <errno.h>
 #include <math.h>
+#include <string.h>
 /**
  * You should store the head of your free list in this variable.
  * Doing so will make it accessible via the extern statement in sfmm.h
@@ -177,6 +178,110 @@ void *sf_malloc(size_t size) {
 }
 
 void *sf_realloc(void *ptr, size_t size) {
+	if(size==0){
+		sf_free(ptr);
+	}
+	uint64_t  padding =0;
+	if(size<=16){
+		padding = 16-size;
+	}
+	else {
+		padding =size%16;
+		if(padding!=0){
+			padding = 16-padding;
+		}
+	}
+	uint64_t minS = size+padding+16;
+	ptr =((sf_header*)ptr-1);
+	uint64_t currblck = (*((sf_header*)ptr)).block_size<<4;
+	if(minS == currblck){
+		ptr =((sf_header*)ptr+1);
+		return ptr;
+	}
+	if(currblck>minS){
+		if(checkRight(ptr)==1){
+		 putBlock(ptr,1,0,minS,size,0,padding);
+		 void* freelist = ptr;
+		 uint64_t off = minS/sizeof(sf_header);
+		 freelist = ((sf_header*)freelist+off);
+		 putBlock(freelist,0,0,currblck-minS,0,0,0);
+		 insertFree(freelist);
+		 freelist =((sf_header*)freelist+1);
+		 coal(freelist);
+		 ptr =((sf_header*)ptr+1);
+		 return ptr;
+		}
+		else{
+			if((currblck-minS)<32){
+				uint64_t splint = currblck-minS;
+				uint64_t spl = 1;
+				if(splint==0)
+					spl =0;
+				 putBlock(ptr,1,spl,currblck,size,splint,padding);
+				ptr =((sf_header*)ptr+1);
+				return ptr;
+			}
+			else{
+				void* freeblc= ptr;
+				 putBlock(ptr,1,0,minS,size,0,padding);
+				 uint64_t off = minS/sizeof(sf_header);
+				 freeblc = ((sf_header*)freeblc+off);
+				 putBlock(freeblc,0,0,currblck-minS,0,0,0);
+				 insertFree(freeblc);
+				ptr =((sf_header*)ptr+1);
+				return ptr;
+			}
+		}
+	}
+	else{ //allocate bigger block
+		if(checkRight(ptr)==1){
+			uint64_t off = currblck/sizeof(sf_header);
+			uint64_t nextsize =  (*((sf_header*)ptr+off)).block_size<<4;
+			int c = (nextsize+currblck)-minS;
+			 if((c>=0)){
+			 	uint64_t unused = (nextsize+currblck)-minS;
+			 	if(unused<32){
+			 		void* nextFree = ((sf_header*)ptr+off);
+			 		removeFree(nextFree);
+			 		int s =1;
+			 		if(unused==0)
+			 			s=0;
+			 		putBlock(ptr,1,s,nextsize+currblck,size,unused,padding);
+			 	ptr =((sf_header*)ptr+1);
+				return ptr;
+			 	}
+			 	void *freelist = ptr;
+			 	uint64_t off = minS/sizeof(sf_header);
+			 	freelist = ((sf_header*)ptr+off);
+			 	putBlock(freelist,0,0,unused,0,0,0);
+		 		insertFree(freelist);
+		 		putBlock(ptr,1,0,minS,size,0,padding);
+		 		ptr =((sf_header*)ptr+1);
+				return ptr;
+			 }
+		}
+		void *oldMem = NULL;
+		uint64_t content = currblck-16;
+		memcpy(oldMem,(void*)((sf_header*)ptr+1),content);
+		sf_free(((sf_header*)ptr+1));
+		void *freeH = best_fit(freelist_head,minS);
+		if(freeH ==NULL){
+			if((freeH=sf_sbrk(size+padding+16))==(void *) -1){
+						errno = ENOMEM;
+							return NULL;
+						}
+						 uint64_t  estimate = (unsigned long)sf_sbrk(0)-(unsigned long)freeH;
+							totalsize+=estimate;
+						if( totalsize>(4*4096)){
+							errno = ENOMEM;
+							return NULL;
+						}
+
+		}
+
+
+	}
+
 	return NULL;
 }
 
@@ -185,6 +290,12 @@ if(ptr==NULL){
 	errno = EINVAL;
 	return;
 }
+sf_header currP = *((sf_header*)ptr-1);
+if(currP.alloc==0){
+	errno = EINVAL;
+	return;
+}
+
 coal(ptr);
 // 4 cases
 }
@@ -304,11 +415,8 @@ void putBlock(void* pt, uint64_t allocate_bit,uint64_t splint_bit, uint64_t bloc
 		*((sf_footer*)pt+blocks) = newFoot;
 }
 void coal(void* ptr){
+
 sf_header currP = *((sf_header*)ptr-1);
-if(currP.alloc==0){
-	errno = EINVAL;
-	return;
-}
 if((unsigned long) start ==((unsigned long)((sf_header*)ptr-1))){
 	// check next
 	uint64_t block_size = currP.block_size<<4;
