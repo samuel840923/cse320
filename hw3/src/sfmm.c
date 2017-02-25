@@ -25,6 +25,7 @@ void coal(void* ptr);
 void removeFree(void*ptr);
 int checkRight(void* pt);
 int checkLeft(void*pt);
+void flipAlloc(void*ptr,uint64_t blck_size ,size_t bit);
 void *sf_malloc(size_t size) {
 
 	if(size<=0){
@@ -259,11 +260,10 @@ void *sf_realloc(void *ptr, size_t size) {
 		 		ptr =((sf_header*)ptr+1);
 				return ptr;
 			 }
+
 		}
-		void *oldMem = NULL;
+
 		uint64_t content = currblck-16;
-		memcpy(oldMem,(void*)((sf_header*)ptr+1),content);
-		sf_free(((sf_header*)ptr+1));
 		void *freeH = best_fit(freelist_head,minS);
 		if(freeH ==NULL){
 			if((freeH=sf_sbrk(size+padding+16))==(void *) -1){
@@ -276,8 +276,40 @@ void *sf_realloc(void *ptr, size_t size) {
 							errno = ENOMEM;
 							return NULL;
 						}
+						if(checkLeft(freeH)==1){
+							putBlock(freeH,0,0,estimate,0,0,0);
+							insertFree(freeH);
+							coal((sf_header*)freeH+1);
+						}
+						else{
+							putBlock(freeH,0,0,estimate,0,0,0);
+							insertFree(freeH);
+						}
+						freeH = best_fit(freelist_head,minS);
+					}
+				uint64_t freeblc = ((*(sf_header*)freeH)).block_size<<4;
+				if((freeblc-minS)<32){
+					uint64_t splint = freeblc-minS;
+					int s =1;
+			 		if(splint==0)
+			 			s=0;
+			 		removeFree(freeH);
+			 		putBlock(freeH,1,s,freeblc,size,splint,padding);
+			 		freeH = ((sf_header*)freeH+1);
+			 		memcpy(freeH,((void*)((sf_header*)ptr+1)),content);
+			 		sf_free(((sf_header*)ptr+1));
+			 		return freeH;
+				}
+				uint64_t unused = freeblc-minS;
+				uint64_t off = minS/sizeof(sf_header);
+				putBlock((sf_header*)freeH+off,0,0,unused,0,0,0);
+				insertFree((sf_header*)freeH+off);
 
-		}
+				putBlock(freeH,1,0,minS,size,0,padding);
+				freeH = (sf_header*)freeH+1;
+			 	memcpy(freeH,(void*)((sf_header*)ptr+1),content);
+			 	sf_free(((sf_header*)ptr+1));
+			 	return freeH;
 
 
 	}
@@ -425,12 +457,14 @@ if((unsigned long) start ==((unsigned long)((sf_header*)ptr-1))){
 	if((unsigned long) ((sf_header*)ptr+offset-1)== ((unsigned long)sf_sbrk(0))){
 		ptr =((sf_header*)ptr-1);
 		putBlock(ptr,0,0,block_size,0,0,0);
+		//flipAlloc(ptr,block_size,0);
 		insertFree(ptr);
 	}
 
 	if(nextP.alloc == 1){
 		ptr =((sf_header*)ptr-1);
 		putBlock(ptr,0,0,block_size,0,0,0);
+		//flipAlloc(ptr,block_size,0);
 		insertFree(ptr);
 		}
 	else {
@@ -530,5 +564,12 @@ if(alc==0)
 return 1;
 else
 return 0;
+}
+void flipAlloc(void*ptr,uint64_t blck_size ,size_t bit){
 
+
+		(*(sf_header*)ptr).alloc= bit;
+		 uint64_t blocks = blck_size-8;
+		blocks = (blocks)/sizeof(sf_footer);
+		(*((sf_footer*)ptr+blocks)).alloc = bit;
 }
