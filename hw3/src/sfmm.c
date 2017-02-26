@@ -26,6 +26,17 @@ void removeFree(void*ptr);
 int checkRight(void* pt);
 int checkLeft(void*pt);
 void flipAlloc(void*ptr,uint64_t blck_size ,size_t bit);
+/*
+stat variable
+*/
+static int allocated_block;
+static int splinter_block;
+static uint64_t padding_total;
+static uint64_t   splint_total;
+static int co_times;
+static double total_payload;
+static double max_payload;
+
 void *sf_malloc(size_t size) {
 
 	if(size<=0){
@@ -44,9 +55,12 @@ void *sf_malloc(size_t size) {
 			padding = 16-padding;
 		}
 	}
+	allocated_block++;
+	total_payload+=size;
+	padding_total+=padding;
 
 	pt = best_fit(freelist_head, size+padding+16 );
-	printf("%p\n",pt);
+
 	if(pt==NULL){
 		if(freelist_head!=NULL){
 			pt = sf_sbrk(0);
@@ -55,24 +69,38 @@ void *sf_malloc(size_t size) {
 				uint64_t b = check.block_size<<4;
 					if((pt=sf_sbrk(size+padding+16-b))==(void *) -1){
 						errno = ENOMEM;
+						allocated_block--;
+						total_payload-=size;
+						padding_total-=padding;
 							return NULL;
 						}
 						 uint64_t  estimate = (unsigned long)sf_sbrk(0)-(unsigned long)pt;
 							totalsize+=estimate;
 						if( totalsize>(4*4096)){
 							errno = ENOMEM;
+							allocated_block--;
+						total_payload-=size;
+						padding_total-=padding;
 							return NULL;
 						}
+						if(max_payload<total_payload)
+							max_payload=total_payload;
+
 						uint64_t  alloSize = (unsigned long)sf_sbrk(0)-(unsigned long)pt;
 						sf_footer foot = *((sf_footer*)pt-2);
 						uint64_t blc = foot.block_size<<4;
 						uint64_t offset = blc/sizeof(sf_header);
 						pt = ((sf_header*)pt-offset);
+						co_times++;
 						if(((alloSize+blc)-(size+16+padding))<32){
 							uint64_t splint = (alloSize+blc)-(size+16+padding);
 							uint64_t s = 1;
 							if(splint ==0)
 								s=0;
+							else
+								splinter_block++;
+
+						 splint_total+=splint;
 						putBlock(pt,1,s,alloSize+blc,size,splint,padding);
 						removeFree(pt);
 						pt =((sf_header*)pt+1);
@@ -102,6 +130,9 @@ void *sf_malloc(size_t size) {
 				}
 			if((pt=sf_sbrk(size+padding+16))==(void *) -1){
 					errno = ENOMEM;
+						allocated_block--;
+						total_payload-=size;
+						padding_total-=padding;
 					return NULL;
 			}
 			if(checkstart==0)
@@ -113,9 +144,15 @@ void *sf_malloc(size_t size) {
 		 	    uint64_t  estimate = (unsigned long)sf_sbrk(0)-(unsigned long)pt;
 				totalsize+=estimate;
 				if( totalsize>(4*4096)){
-					errno = ENOMEM;
+						allocated_block--;
+						total_payload-=size;
+						padding_total-=padding;
+						errno = ENOMEM;
 							return NULL;
 						}
+
+				if(max_payload<total_payload)
+				   max_payload=total_payload;
 				estimate = estimate - (size+padding+16); //free block size
 				if(estimate>=32){
 		 		uint64_t  move = size+16+padding;
@@ -133,7 +170,10 @@ void *sf_malloc(size_t size) {
 			 	if(splint==0){
 			 		 s = 0;
 			 	}
+			 	else
+			 		splinter_block++;
 
+			 	 splint_total+=splint;
 			 	putBlock(pt,1,s,bl,size,splint,padding);
 			 	removeFree(pt);
 			 	pt =((sf_header*)pt+1);
@@ -144,9 +184,11 @@ void *sf_malloc(size_t size) {
 
 
 	else{
+		 if(max_payload<total_payload)
+		max_payload = total_payload;
 		sf_free_header found = *((sf_free_header*)pt);
 		 uint64_t newBlock=  (uint64_t)found.header.block_size<<4;
-		 printf("%zu\n",newBlock);
+
 		 uint64_t  expected = size+padding+16;
 		 if(newBlock-expected<32){
 			 uint64_t bl = newBlock;
@@ -154,6 +196,9 @@ void *sf_malloc(size_t size) {
 			 uint64_t s=1;
 			 if(splint==0)
 			 	s=0;
+			 else
+			 	splinter_block++;
+			  splint_total+=splint;
 			 putBlock(pt,1,s,bl,size,splint,padding);
 			 removeFree(pt);
 		pt =((sf_header*)pt+1);
@@ -179,6 +224,22 @@ void *sf_malloc(size_t size) {
 }
 
 void *sf_realloc(void *ptr, size_t size) {
+	uint64_t checkheader_bit = (*((sf_header*)ptr-1)).alloc;
+	uint64_t offe =  (*((sf_header*)ptr-1)).block_size<<4;
+	offe = (offe-16)/(sizeof(sf_footer));
+	uint64_t checkfoot_bit = (*((sf_footer*)ptr+offe)).alloc;
+	if(checkfoot_bit!=1||checkheader_bit!=1){
+		errno=EINVAL;
+		return NULL;
+	}
+	uint64_t pad = (*((sf_header*)ptr-1)).padding_size;
+	uint64_t spll = (*((sf_header*)ptr-1)).splinter_size;
+	uint64_t req_size = (*((sf_header*)ptr-1)).requested_size;
+	total_payload-=req_size;
+	total_payload+=size;
+	padding_total-=pad;
+	splint_total-=spll;
+	splinter_block--;
 	if(size==0){
 		sf_free(ptr);
 	}
@@ -192,14 +253,20 @@ void *sf_realloc(void *ptr, size_t size) {
 			padding = 16-padding;
 		}
 	}
+	padding_total+=padding;
 	uint64_t minS = size+padding+16;
 	ptr =((sf_header*)ptr-1);
 	uint64_t currblck = (*((sf_header*)ptr)).block_size<<4;
 	if(minS == currblck){
-		ptr =((sf_header*)ptr+1);
+		 putBlock(ptr,1,0,minS,size,0,padding);
+		 ptr =((sf_header*)ptr+1);
+		   if(max_payload<total_payload)
+		max_payload = total_payload;
 		return ptr;
 	}
 	if(currblck>minS){
+		 if(max_payload<total_payload)
+		max_payload = total_payload;
 		if(checkRight(ptr)==1){
 		 putBlock(ptr,1,0,minS,size,0,padding);
 		 void* freelist = ptr;
@@ -218,6 +285,10 @@ void *sf_realloc(void *ptr, size_t size) {
 				uint64_t spl = 1;
 				if(splint==0)
 					spl =0;
+				else{
+					splinter_block++;
+				}
+				splint_total+=spl;
 				 putBlock(ptr,1,spl,currblck,size,splint,padding);
 				ptr =((sf_header*)ptr+1);
 				return ptr;
@@ -240,6 +311,9 @@ void *sf_realloc(void *ptr, size_t size) {
 			uint64_t nextsize =  (*((sf_header*)ptr+off)).block_size<<4;
 			int c = (nextsize+currblck)-minS;
 			 if((c>=0)){
+			 	 if(max_payload<total_payload)
+					max_payload = total_payload;
+			 	co_times++;
 			 	uint64_t unused = (nextsize+currblck)-minS;
 			 	if(unused<32){
 			 		void* nextFree = ((sf_header*)ptr+off);
@@ -247,6 +321,9 @@ void *sf_realloc(void *ptr, size_t size) {
 			 		int s =1;
 			 		if(unused==0)
 			 			s=0;
+			 		else
+			 			splinter_block++;
+			 		splint_total+=unused;
 			 		putBlock(ptr,1,s,nextsize+currblck,size,unused,padding);
 			 	ptr =((sf_header*)ptr+1);
 				return ptr;
@@ -268,12 +345,22 @@ void *sf_realloc(void *ptr, size_t size) {
 		if(freeH ==NULL){
 			if((freeH=sf_sbrk(size+padding+16))==(void *) -1){
 						errno = ENOMEM;
+						splint_total+=spll;
+						padding_total+=pad;
+						splinter_block++;
+						total_payload+=req_size;
+						total_payload-=size;
 							return NULL;
 						}
 						 uint64_t  estimate = (unsigned long)sf_sbrk(0)-(unsigned long)freeH;
 							totalsize+=estimate;
 						if( totalsize>(4*4096)){
 							errno = ENOMEM;
+						splint_total+=spll;
+						padding_total+=pad;
+						splinter_block++;
+						total_payload+=req_size;
+						total_payload-=size;
 							return NULL;
 						}
 						if(checkLeft(freeH)==1){
@@ -287,17 +374,24 @@ void *sf_realloc(void *ptr, size_t size) {
 						}
 						freeH = best_fit(freelist_head,minS);
 					}
+			 if(max_payload<total_payload)
+			  max_payload = total_payload;
+
 				uint64_t freeblc = ((*(sf_header*)freeH)).block_size<<4;
 				if((freeblc-minS)<32){
 					uint64_t splint = freeblc-minS;
 					int s =1;
 			 		if(splint==0)
 			 			s=0;
+			 		else
+			 			splinter_block++;
+			 		splint_total+=splint;
 			 		removeFree(freeH);
 			 		putBlock(freeH,1,s,freeblc,size,splint,padding);
 			 		freeH = ((sf_header*)freeH+1);
 			 		memcpy(freeH,((void*)((sf_header*)ptr+1)),content);
 			 		sf_free(((sf_header*)ptr+1));
+			 		allocated_block++;
 			 		return freeH;
 				}
 				uint64_t unused = freeblc-minS;
@@ -309,6 +403,7 @@ void *sf_realloc(void *ptr, size_t size) {
 				freeH = (sf_header*)freeH+1;
 			 	memcpy(freeH,(void*)((sf_header*)ptr+1),content);
 			 	sf_free(((sf_header*)ptr+1));
+			 	allocated_block++;
 			 	return freeH;
 
 
@@ -318,22 +413,38 @@ void *sf_realloc(void *ptr, size_t size) {
 }
 
 void sf_free(void* ptr) {
+
 if(ptr==NULL){
 	errno = EINVAL;
 	return;
 }
+
 sf_header currP = *((sf_header*)ptr-1);
-if(currP.alloc==0){
+uint64_t offe =  (*((sf_header*)ptr-1)).block_size<<4;
+offe = (offe-16)/(sizeof(sf_footer));
+uint64_t checkfoot_bit = (*((sf_footer*)ptr+offe)).alloc;
+if(currP.alloc==0||checkfoot_bit==0){
 	errno = EINVAL;
 	return;
 }
-
+uint64_t requested = currP.requested_size;
+uint64_t pd = currP.padding_size;
+uint64_t splll = currP.splinter_size;
+padding_total-=pd;
+splint_total-=splll;
+if(splll!=0)
+splinter_block--;
+total_payload-=requested;
+allocated_block--;
 coal(ptr);
 // 4 cases
 }
 
 int sf_info(info* ptr) {
-	return -1;
+	double peak = max_payload/totalsize;
+	info now= {allocated_block,splinter_block,padding_total,splint_total,co_times,peak};
+	*(info*)ptr = now;
+	return 0;
 }
 void* best_fit(sf_free_header *head,size_t dreamS){
 void* best = NULL;
@@ -476,6 +587,7 @@ if((unsigned long) start ==((unsigned long)((sf_header*)ptr-1))){
 		putBlock(ptr,0,0,newBlc,0,0,0);
 		removeFree((sf_header*)ptr+offset);
 		insertFree(ptr);
+		co_times++;
 		}
 
 }
@@ -493,6 +605,7 @@ ptr = ((sf_header*)ptr-off);
 removeFree(ptr);
 putBlock(ptr,0,0,total,0,0,0);
 insertFree(ptr);
+co_times++;
 
 
 }
@@ -503,6 +616,7 @@ uint64_t nxtB = (*((sf_header*)ptr+off)).block_size<<4;
 putBlock(ptr,0,0,blck+nxtB,0,0,0);
 removeFree((sf_header*)ptr+off);
 insertFree(ptr);
+co_times++;
 }
 else if(checkLeft(ptr)==1){
 uint64_t currblck = (*((sf_footer*)ptr)).block_size<<4;
@@ -512,6 +626,7 @@ ptr =((sf_header*)ptr-off);
 removeFree(ptr);
 putBlock(ptr,0,0,currblck+prevblck,0,0,0);
 insertFree(ptr);
+co_times++;
 
 
 }
