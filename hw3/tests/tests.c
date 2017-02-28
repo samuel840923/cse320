@@ -67,3 +67,178 @@ Test(sf_memsuite, Coalesce_no_coalescing, .init = sf_mem_init, .fini = sf_mem_fi
 //STUDENT UNIT TESTS SHOULD BE WRITTEN BELOW
 //DO NOT DELETE THESE COMMENTS
 //#
+Test(sf_memsuite, Coalesce_with_coalescing_to_the_right, .init = sf_mem_init, .fini = sf_mem_fini) {
+  int *x = sf_malloc(32);
+  int *y = sf_malloc(32);
+  int *z = sf_malloc(32);
+  *z = 3;
+  sf_free(y);
+  sf_free(x);
+   info pt = {0,0,0,0,0,0};
+  info *ptr = &pt;
+  sf_info(ptr);
+  cr_assert(ptr->padding==0,"no need to pad");
+  cr_assert(ptr->allocatedBlocks==1,"only one is currently allocated");
+  cr_assert(ptr->splinterBlocks==0, "no splint");
+  cr_assert(ptr->splintering==0,"no splinter need");
+  cr_assert(ptr->coalesces==1, "only one coal");
+  cr_assert(freelist_head->header.block_size<<4==96,"48+48=96");
+  cr_assert(freelist_head->next->header.block_size<<4==3952,"4096-96-48");
+}
+Test(sf_memsuite, Coalesce_with_coalescing_to_the_left, .init = sf_mem_init, .fini = sf_mem_fini) {
+  int *x = sf_malloc(32);
+  int *y = sf_malloc(32);
+  int *z = sf_malloc(32);
+  *z = 3;
+  sf_free(x);
+  sf_free(y);
+   info pt = {0,0,0,0,0,0};
+  info *ptr = &pt;
+  sf_info(ptr);
+  cr_assert(ptr->padding==0,"no need to pad");
+  cr_assert(ptr->allocatedBlocks==1,"only one is currently allocated");
+  cr_assert(ptr->splinterBlocks==0, "no splint");
+  cr_assert(ptr->splintering==0,"no splinter need");
+  cr_assert(ptr->coalesces==1, "only one coal");
+  cr_assert(freelist_head->header.block_size<<4==96,"48+48=96");
+  cr_assert(freelist_head->next->header.block_size<<4==3952,"4096-96-48");
+}
+Test(sf_memsuite, Coalesce_with_coalescing_to_both_side, .init = sf_mem_init, .fini = sf_mem_fini) {
+  int *x = sf_malloc(32);
+  int *y = sf_malloc(32);
+  int *z = sf_malloc(32);
+  int *a = sf_malloc(32);
+  int *b = sf_malloc(32);
+  *x = 3;
+  *b =4;
+  sf_free(y);
+  sf_free(a);
+  sf_free(z);
+   info pt = {0,0,0,0,0,0};
+  info *ptr = &pt;
+  sf_info(ptr);
+  cr_assert(ptr->padding==0,"no need to pad");
+  cr_assert(ptr->allocatedBlocks==2,"only 2 is currently allocated");
+  cr_assert(ptr->splinterBlocks==0, "no splint");
+  cr_assert(ptr->splintering==0,"no splinter need");
+  cr_assert(ptr->coalesces==1, "only one coal");
+  cr_assert(freelist_head->header.block_size<<4==144,"48+48+48=96");
+  cr_assert(freelist_head->next->header.block_size<<4==3856,"4096-96-48");
+  cr_assert(*x==3,"x shouldnt be touch");
+  cr_assert(*b==4,"b shouldnt be touch");
+}
+Test(sf_memsuite, Special_Case_freeing_twice, .init = sf_mem_init, .fini = sf_mem_fini) {
+  int *x = sf_malloc(32);
+  int *y = sf_malloc(32);
+  *y=1;
+  sf_free(x);
+  int* check = sf_realloc(x,100);
+
+  cr_assert(check==NULL,"you using a free space, should return null");
+}
+Test(sf_memsuite, realloc_to_smaller_space_with_splinter, .init = sf_mem_init, .fini = sf_mem_fini) {
+  int *x = sf_malloc(32);
+  int *y = sf_malloc(48);
+  int *z = sf_malloc(48);
+  sf_realloc(y,32);
+  *y=10;
+  *x=1;
+  *z=1;
+  info pt = {0,0,0,0,0,0};
+  info *ptr = &pt;
+  sf_info(ptr);
+  cr_assert(ptr->splinterBlocks==1, "you have %zu splint",ptr->splinterBlocks);
+  cr_assert(ptr->splintering==16,"should have 16 splinter");
+  cr_assert(ptr->allocatedBlocks==3,"only 3 is currently allocated");
+  cr_assert(*y==10,"should not change y");
+
+}
+Test(sf_memsuite, realloc_to_smaller_space_without_splinter, .init = sf_mem_init, .fini = sf_mem_fini) {
+  int *x = sf_malloc(32);
+  int *y = sf_malloc(48);
+  int *z = sf_malloc(48);
+  sf_realloc(y,16);
+  *y=10;
+  *x=1;
+  *z=1;
+  info pt = {0,0,0,0,0,0};
+  info *ptr = &pt;
+  sf_info(ptr);
+  cr_assert(ptr->splinterBlocks==0, "you have %zu splint",ptr->splinterBlocks);
+  cr_assert(ptr->splintering==0,"should have 16 splinter");
+  cr_assert(ptr->allocatedBlocks==3,"only 3 is currently allocated");
+  cr_assert(*y==10,"should not change y");
+  cr_assert(freelist_head->header.block_size<<4 ==32,"should create a freelist of 32");
+  cr_assert(ptr->coalesces==0, "no coal");
+}
+Test(sf_memsuite, realloc_to_larger_space_with_no_space_after_with_splinter, .init = sf_mem_init, .fini = sf_mem_fini) {
+  int *x = sf_malloc(14);
+  int *y = sf_malloc(25);
+  int *w = sf_malloc(48);
+  int *z = sf_malloc(48);
+  sf_free(w);
+  *x=109;
+  void *freelist_head_check = (sf_header*)x-1;
+  int *moved = sf_realloc(x,20);
+  *y=10;
+  *x=1;
+  *z=1;
+  info pt = {0,0,0,0,0,0};
+  info *ptr = &pt;
+  sf_info(ptr);
+  cr_assert(ptr->splinterBlocks==1, "you have %zu splint",ptr->splinterBlocks);
+  cr_assert(ptr->splintering==16,"should have 16 splinter");
+  cr_assert(ptr->allocatedBlocks==3,"only 3 is currently allocated");
+  cr_assert(*moved==109,"should not change y");
+  cr_assert((*((sf_header*)moved-1)).padding_size==12,"should be 12");
+  cr_assert((unsigned long)freelist_head == (unsigned long)freelist_head_check,"old spot should be head of freelist");
+}
+Test(sf_memsuite, realloc_to_larger_with_space_after, .init = sf_mem_init, .fini = sf_mem_fini) {
+  int *x = sf_malloc(31);
+  int *y = sf_malloc(12);
+  int *z = sf_malloc(48);
+  int *w = sf_malloc(48);
+  *y=10;
+  *x=1;
+  *w=1;
+   sf_free(z);
+  void* test= sf_realloc(y,20);
+  test = (sf_header*)test-1;
+
+  info pt = {0,0,0,0,0,0};
+  info *ptr = &pt;
+  sf_info(ptr);
+  cr_assert(ptr->splinterBlocks==0, "you have %zu splint",ptr->splinterBlocks);
+  cr_assert(ptr->splintering==0,"should have 16 splinter");
+  cr_assert(ptr->allocatedBlocks==3,"only 3 is currently allocated");
+  cr_assert(*y==10,"should not change y");
+  cr_assert(freelist_head->header.block_size<<4 ==48,"should create a freelist of 48");
+  cr_assert(ptr->coalesces==1, "1 coal");
+  cr_assert((*((sf_header*)test)).block_size<<4==48, "new realloc should be 48");
+  cr_assert((*((sf_header*)test)).padding_size==12, "12 padding needed");
+   cr_assert(ptr->padding==13,"total padding is 13");
+}
+Test(sf_memsuite, realloc_to_larger_with_space_after_2, .init = sf_mem_init, .fini = sf_mem_fini) {
+  int *x = sf_malloc(31);
+  int *y = sf_malloc(12);
+  int *z = sf_malloc(45);
+  *z=10;
+  *x=1;
+  *y=1;
+  void* test= sf_realloc(z,80);
+  test = (sf_header*)test-1;
+
+  info pt = {0,0,0,0,0,0};
+  info *ptr = &pt;
+  sf_info(ptr);
+  cr_assert(ptr->splinterBlocks==0, "you have %zu splint",ptr->splinterBlocks);
+  cr_assert(ptr->splintering==0,"should have 16 splinter");
+  cr_assert(ptr->allocatedBlocks==3,"only 3 is currently allocated");
+  cr_assert(*z==10,"should not change z");
+  cr_assert(freelist_head->header.block_size<<4 ==3920,"should create a freelist of 3920");
+  cr_assert(ptr->coalesces==1, "1 coal");
+  cr_assert((*((sf_header*)test)).block_size<<4==96, "new realloc should be 96");
+  cr_assert((*((sf_header*)test)).padding_size==0, "0 padding needed");
+   cr_assert(ptr->padding==5,"total padding is 5");
+}
+

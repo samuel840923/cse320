@@ -128,7 +128,7 @@ void *sf_malloc(size_t size) {
 					}
 
 				}
-			if((pt=sf_sbrk(size+padding+16))==(void *) -1){
+			if((pt=sf_sbrk((size+padding+16)))==(void *) -1){
 					errno = ENOMEM;
 						allocated_block--;
 						total_payload-=size;
@@ -239,6 +239,7 @@ void *sf_realloc(void *ptr, size_t size) {
 	total_payload+=size;
 	padding_total-=pad;
 	splint_total-=spll;
+	if(spll!=0)
 	splinter_block--;
 	if(size==0){
 		sf_free(ptr);
@@ -288,7 +289,7 @@ void *sf_realloc(void *ptr, size_t size) {
 				else{
 					splinter_block++;
 				}
-				splint_total+=spl;
+				splint_total+=splint;
 				 putBlock(ptr,1,spl,currblck,size,splint,padding);
 				ptr =((sf_header*)ptr+1);
 				return ptr;
@@ -441,6 +442,9 @@ coal(ptr);
 }
 
 int sf_info(info* ptr) {
+	if(ptr==NULL){
+		return -1;
+	}
 	double peak = max_payload/totalsize;
 	info now= {allocated_block,splinter_block,padding_total,splint_total,co_times,peak};
 	*(info*)ptr = now;
