@@ -56,17 +56,39 @@ int main(int argc, char *argv[]) {
 
     // Tell the user about the fields
     info("Initialized heap with %dmb of heap space.\n", MAX_HEAP_SIZE >> 20);
-    press_to_cont();
 
     // Print out title for first test
     printf("=== Test1: Allocation test ===\n");
-    // Test #1: Allocate an integer
-    int *value1 = sf_malloc(sizeof(int));
-    null_check(value1, sizeof(int));
-    payload_check(value1);
-    // Print out the allocator block
-    sf_blockprint(value1);
+    int *value1 = sf_malloc(4000);
+    sf_snapshot(true);
+int *b = sf_malloc(4000);
+    sf_snapshot(true);
     press_to_cont();
+int *c = sf_malloc(4000);
+    sf_snapshot(true);
+    press_to_cont();
+int *d = sf_malloc(4000);
+    sf_snapshot(true);
+    press_to_cont();
+int *e = sf_malloc(4000);
+info pt = {0,0,0,0,0,0};
+    info *ptr = &pt;
+
+    sf_info(ptr);
+    printf("padding size: %zu\n",ptr->padding);
+    printf("how many alloc: %zu\n",ptr->allocatedBlocks);
+    printf("how many splinter block: %zu\n",ptr->splinterBlocks);
+    printf("total splint %zu\n",ptr->splintering);
+    printf("total coal %zu\n",ptr->coalesces);
+    printf("peak-> %lf\n", ptr->peakMemoryUtilization);
+    press_to_cont();
+*value1=1;
+*b=2;
+*c=3;
+*d=4;
+*e = 1;
+    //sf_varprint(value3);
+
 
     // Now assign a value
     printf("=== Test2: Assignment test ===\n");

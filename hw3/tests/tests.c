@@ -3,6 +3,7 @@
 #include <stdio.h>
 #include <stdlib.h>
 #include <string.h>
+#include <errno.h>
 #include <unistd.h>
 #include "sfmm.h"
 
@@ -209,7 +210,7 @@ Test(sf_memsuite, realloc_to_larger_with_space_after, .init = sf_mem_init, .fini
   info *ptr = &pt;
   sf_info(ptr);
   cr_assert(ptr->splinterBlocks==0, "you have %zu splint",ptr->splinterBlocks);
-  cr_assert(ptr->splintering==0,"should have 16 splinter");
+  cr_assert(ptr->splintering==0,"should have 0 splinter");
   cr_assert(ptr->allocatedBlocks==3,"only 3 is currently allocated");
   cr_assert(*y==10,"should not change y");
   cr_assert(freelist_head->header.block_size<<4 ==48,"should create a freelist of 48");
@@ -217,6 +218,7 @@ Test(sf_memsuite, realloc_to_larger_with_space_after, .init = sf_mem_init, .fini
   cr_assert((*((sf_header*)test)).block_size<<4==48, "new realloc should be 48");
   cr_assert((*((sf_header*)test)).padding_size==12, "12 padding needed");
    cr_assert(ptr->padding==13,"total padding is 13");
+
 }
 Test(sf_memsuite, realloc_to_larger_with_space_after_2, .init = sf_mem_init, .fini = sf_mem_fini) {
   int *x = sf_malloc(31);
@@ -226,6 +228,7 @@ Test(sf_memsuite, realloc_to_larger_with_space_after_2, .init = sf_mem_init, .fi
   *x=1;
   *y=1;
   void* test= sf_realloc(z,80);
+  int * check = test;
   test = (sf_header*)test-1;
 
   info pt = {0,0,0,0,0,0};
@@ -234,11 +237,100 @@ Test(sf_memsuite, realloc_to_larger_with_space_after_2, .init = sf_mem_init, .fi
   cr_assert(ptr->splinterBlocks==0, "you have %zu splint",ptr->splinterBlocks);
   cr_assert(ptr->splintering==0,"should have 16 splinter");
   cr_assert(ptr->allocatedBlocks==3,"only 3 is currently allocated");
-  cr_assert(*z==10,"should not change z");
+  cr_assert(*check==10,"should not change z");
   cr_assert(freelist_head->header.block_size<<4 ==3920,"should create a freelist of 3920");
   cr_assert(ptr->coalesces==1, "1 coal");
   cr_assert((*((sf_header*)test)).block_size<<4==96, "new realloc should be 96");
   cr_assert((*((sf_header*)test)).padding_size==0, "0 padding needed");
    cr_assert(ptr->padding==5,"total padding is 5");
 }
+Test(sf_memsuite, two_coale, .init = sf_mem_init, .fini = sf_mem_fini){
+
+  int *x = sf_malloc(31);
+  int *y = sf_malloc(12);
+  int *z = sf_malloc(45);
+  int *a = sf_malloc(31);
+  int *b = sf_malloc(12);
+  int *c = sf_malloc(45);
+  int *d = sf_malloc(45);
+  *a=10;
+   *d=10;
+  *x=1;
+  *c=1;
+  sf_free(y);
+  sf_free(z);
+  sf_free(c);
+  sf_free(b);
+  info pt = {0,0,0,0,0,0};
+  info *ptr = &pt;
+  sf_info(ptr);
+  cr_assert(ptr->coalesces==2, "should be 2 coal you have %zu coal\n",ptr->coalesces);
+  cr_assert(freelist_head->header.block_size<<4 ==96,"should create a freelist of 96");
+  cr_assert(freelist_head->next->header.block_size<<4 ==96,"should create a freelist of 96");
+  cr_assert(freelist_head->next->next!=NULL,"should have three in freelist");
+
+}
+Test(sf_memsuite, best_fit_test, .init = sf_mem_init, .fini = sf_mem_fini){
+
+  int *x = sf_malloc(10);
+  int *y = sf_malloc(34);
+  int *z = sf_malloc(68);
+  int *a = sf_malloc(20);
+  int *b = sf_malloc(67);
+  int *c = sf_malloc(45);
+  int *d = sf_malloc(45);
+  int *should_use = d;
+  int *h = sf_malloc(45);
+  *a=10;
+  *y=10;
+  *x=1;
+  *c=1;
+  *h=8;
+  sf_free(x);
+  sf_free(z);
+  sf_free(b);
+  sf_free(d);
+  int *insert = sf_malloc(20);
+  cr_assert(insert==should_use,"should use the last one");
+}
+
+Test(sf_memsuite, invalid_free, .init = sf_mem_init, .fini = sf_mem_fini){
+int *x = sf_malloc(10);
+ int *y = sf_malloc(34);
+ sf_free(x);
+ sf_free(x);
+ *y =3;
+ cr_assert(errno==EINVAL,"errno should be set");
+}
+Test(sf_memsuite, invalid_free_2, .init = sf_mem_init, .fini = sf_mem_fini){
+int *a = sf_malloc(10);
+int *b = sf_malloc(34);
+int *c = sf_malloc(29);
+int *d = sf_malloc(89);
+sf_free(c);
+sf_realloc(a,17);
+sf_free(a);
+ *b=3;
+ *d=3;
+ cr_assert(errno==EINVAL,"errno should be set");
+}
+Test(sf_memsuite, too_many_request_page, .init = sf_mem_init, .fini = sf_mem_fini){
+int *a = sf_malloc(4000);
+int *b = sf_malloc(4000);
+int *c = sf_malloc(4000);
+int *d = sf_malloc(4000);
+int *e = sf_malloc(4000);
+*a=1;
+*b=2;
+*c=3;
+*d=4;
+cr_assert(errno==ENOMEM,"errno should be set");
+cr_assert(e==NULL,"should return null");
+}
+Test(sf_memsuite, too_many_request_page_2, .init = sf_mem_init, .fini = sf_mem_fini){
+int *a = sf_malloc(4*4096);
+cr_assert(a==NULL,"should return null");
+cr_assert(errno==ENOMEM,"errno should be set");
+}
+
 

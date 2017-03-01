@@ -67,6 +67,7 @@ void *sf_malloc(size_t size) {
 			sf_footer check = *((sf_footer*)pt-2);
 			if(check.alloc==0){
 				uint64_t b = check.block_size<<4;
+
 					if((pt=sf_sbrk(size+padding+16-b))==(void *) -1){
 						errno = ENOMEM;
 						allocated_block--;
@@ -120,6 +121,7 @@ void *sf_malloc(size_t size) {
 		  				  freelist =((sf_header*)freelist+move);
 		  					 bl = newDiff;
 		  			   putBlock(freelist,0,0,bl,0,0,0);
+		  			   removeFree(pt);
 		  			   insertFree(freelist);
 		  			   	bl = size+16+padding;
 		  			   putBlock(pt,1,0,bl,size,0,padding);
