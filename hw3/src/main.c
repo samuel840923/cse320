@@ -60,12 +60,24 @@ int main(int argc, char *argv[]) {
     // Print out title for first test
     printf("=== Test1: Allocation test ===\n");
 
-    int *value1 = sf_malloc(65);
-int *b = sf_malloc(93);
-sf_realloc(value1,4000);
-*b=5;
-    sf_snapshot(true);
 
+ int *value1 = sf_malloc(31);
+  int *y = sf_malloc(12);
+  int *z = sf_malloc(45);
+  int *a = sf_malloc(31);
+  int *b = sf_malloc(12);
+  int *c = sf_malloc(45);
+  int *d = sf_malloc(45);
+  *a=10;
+   *d=10;
+
+  *c=1;
+  sf_free(y);
+  sf_free(z);
+  sf_free(c);
+  sf_free(b);
+    sf_snapshot(true);
+press_to_cont();
 info pt = {0,0,0,0,0,0};
     info *ptr = &pt;
 

@@ -225,6 +225,14 @@ void *sf_malloc(size_t size) {
 }
 
 void *sf_realloc(void *ptr, size_t size) {
+	if(ptr==NULL){
+		errno=EINVAL;
+		return NULL;
+	}
+	if(!((unsigned long)start<=(unsigned long)ptr&&(unsigned long)ptr<=(unsigned long)sf_sbrk(0))){
+		errno = EINVAL;
+			return NULL;
+		}
 	uint64_t checkheader_bit = (*((sf_header*)ptr-1)).alloc;
 	uint64_t offe =  (*((sf_header*)ptr-1)).block_size<<4;
 	offe = (offe-16)/(sizeof(sf_footer));
@@ -420,6 +428,10 @@ void sf_free(void* ptr) {
 if(ptr==NULL){
 	errno = EINVAL;
 	return;
+}
+if(!((unsigned long)start<=(unsigned long)ptr&&(unsigned long)ptr<=(unsigned long)sf_sbrk(0))){
+errno = EINVAL;
+return;
 }
 
 sf_header currP = *((sf_header*)ptr-1);

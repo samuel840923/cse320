@@ -346,6 +346,7 @@ int *c = sf_malloc(4000);
   cr_assert(ptr->coalesces==2, "no coal");
   cr_assert(freelist_head->header.block_size<<4==240, "should have free of 240");
   cr_assert(freelist_head->next==NULL, "only one free");
+  cr_assert(freelist_head->header.alloc==0, "is free!");
   cr_assert(ptr->splinterBlocks==0, "you have %zu splint",ptr->splinterBlocks);
   cr_assert(ptr->splintering==0,"should have 0 splinter");
    cr_assert(ptr->padding==0,"total padding is 0");
@@ -356,6 +357,7 @@ int *b = sf_malloc(93);
 sf_realloc(a,4000);
 *b=5;
  cr_assert(freelist_head->header.block_size<<4==96, "should have free of 96");
+ cr_assert(freelist_head->header.alloc==0, "is free!");
  cr_assert(freelist_head->next->header.block_size<<4==3968, "should have free of 120 but you have %zu\n",freelist_head->next->header.block_size<<4);
  info pt = {0,0,0,0,0,0};
   info *ptr = &pt;
@@ -381,10 +383,58 @@ info *ptr = &pt;
 sf_info(ptr);
 cr_assert(ptr->coalesces==5, "how much should coal %zu",ptr->coalesces);
 cr_assert(freelist_head->header.block_size<<4==4256, "how much should coal %zu",freelist_head->header.block_size<<4);
+cr_assert(freelist_head->header.alloc==0, "is free!");
 cr_assert(freelist_head->next==NULL, "only one freehead (next)");
 cr_assert(freelist_head->prev==NULL, "only one freehead (prev)");
 }
+Test(sf_memsuite, null_freelist, .init = sf_mem_init, .fini = sf_mem_fini){
+ int *b = sf_malloc(2032);
+int *a = sf_malloc(2032);
+*a = 2;
+*b =1;
+cr_assert(freelist_head==NULL, "no need for freelist");
+}
+Test(sf_memsuite, null_freelist_2, .init = sf_mem_init, .fini = sf_mem_fini){
+ int *b = sf_malloc(8176);
+*b =1;
+cr_assert(freelist_head==NULL, "no need for freelist");
+}
+Test(sf_memsuite, invalid_pointer_realloc, .init = sf_mem_init, .fini = sf_mem_fini){
+int a =3;
+int *inv = &a;
+int *re = sf_realloc(inv,100);
+cr_assert(re==NULL, "is invalid pointer!!");
+cr_assert(errno==EINVAL, "errno is not set proper");
+}
+Test(sf_memsuite, invalid_pointer_free, .init = sf_mem_init, .fini = sf_mem_fini){
+int a =3;
+sf_free(&a);
+cr_assert(errno==EINVAL, "errno is not set proper");
+}
+Test(sf_memsuite, peak_utilization_test, .init = sf_mem_init, .fini = sf_mem_fini){
+int *a = sf_malloc(298);
+int *b = sf_malloc(478);
+int *c = sf_malloc(988);
+int *d = sf_malloc(250);
+int *e = sf_malloc(123);
+sf_free(a);
+sf_free(b);
+*d=123;
+*e = 321;
+*c=12313;
+int *moved = sf_realloc(c,1098);
+ info pt = {0,0,0,0,0,0};
+ info *ptr = &pt;
+ sf_info(ptr);
+cr_assert(freelist_head->header.block_size<<4==1824,"is not 1824");
+cr_assert(freelist_head->next->header.block_size<<4==736,"is not 736");
+cr_assert(freelist_head->header.alloc==0, "is free!");
+cr_assert(freelist_head->next->header.alloc==0, "is free!");
+ cr_assert(ptr->coalesces==2, "2 coal");
+ cr_assert(*moved==12313, "shouldnt change");
+cr_assert(ptr->peakMemoryUtilization==(2137.0/4096),"is not equal" );
 
+}
 
 
 
