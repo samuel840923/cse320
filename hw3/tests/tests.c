@@ -239,6 +239,7 @@ Test(sf_memsuite, realloc_to_larger_with_space_after_2, .init = sf_mem_init, .fi
   cr_assert(ptr->allocatedBlocks==3,"only 3 is currently allocated");
   cr_assert(*check==10,"should not change z");
   cr_assert(freelist_head->header.block_size<<4 ==3920,"should create a freelist of 3920");
+  cr_assert(freelist_head->next==NULL,"should only have one free list");
   cr_assert(ptr->coalesces==1, "1 coal");
   cr_assert((*((sf_header*)test)).block_size<<4==96, "new realloc should be 96");
   cr_assert((*((sf_header*)test)).padding_size==0, "0 padding needed");
@@ -332,5 +333,58 @@ int *a = sf_malloc(4*4096);
 cr_assert(a==NULL,"should return null");
 cr_assert(errno==ENOMEM,"errno should be set");
 }
+Test(sf_memsuite, big_case, .init = sf_mem_init, .fini = sf_mem_fini){
+int *a = sf_malloc(4000);
+int *b = sf_malloc(4000);
+int *c = sf_malloc(4000);
+*a = 1;
+*b = 2;
+*c = 3;
+ info pt = {0,0,0,0,0,0};
+  info *ptr = &pt;
+  sf_info(ptr);
+  cr_assert(ptr->coalesces==2, "no coal");
+  cr_assert(freelist_head->header.block_size<<4==240, "should have free of 240");
+  cr_assert(freelist_head->next==NULL, "only one free");
+  cr_assert(ptr->splinterBlocks==0, "you have %zu splint",ptr->splinterBlocks);
+  cr_assert(ptr->splintering==0,"should have 0 splinter");
+   cr_assert(ptr->padding==0,"total padding is 0");
+}
+Test(sf_memsuite, realloc_big_case, .init = sf_mem_init, .fini = sf_mem_fini){
+int *a = sf_malloc(65);
+int *b = sf_malloc(93);
+sf_realloc(a,4000);
+*b=5;
+ cr_assert(freelist_head->header.block_size<<4==96, "should have free of 96");
+ cr_assert(freelist_head->next->header.block_size<<4==3968, "should have free of 120 but you have %zu\n",freelist_head->next->header.block_size<<4);
+ info pt = {0,0,0,0,0,0};
+  info *ptr = &pt;
+  sf_info(ptr);
+  cr_assert(ptr->coalesces==1, "1 coal");
+}
+Test(sf_memsuite, crazy_coal, .init = sf_mem_init, .fini = sf_mem_fini){
+int *a = sf_malloc(4000);
+int *b = sf_malloc(4000);
+int *c = sf_malloc(4000);
+*a=3;
+*b=4;
+sf_free (c);
+cr_assert(freelist_head->header.block_size<<4==4256, "should have free of 120 but you have");
+int *d = sf_malloc(23);
+int *e = sf_malloc(129);
+int *huge = sf_malloc(2000);
+sf_free (e);
+sf_free (d);
+sf_free(huge);
+info pt = {0,0,0,0,0,0};
+info *ptr = &pt;
+sf_info(ptr);
+cr_assert(ptr->coalesces==5, "how much should coal %zu",ptr->coalesces);
+cr_assert(freelist_head->header.block_size<<4==4256, "how much should coal %zu",freelist_head->header.block_size<<4);
+cr_assert(freelist_head->next==NULL, "only one freehead (next)");
+cr_assert(freelist_head->prev==NULL, "only one freehead (prev)");
+}
+
+
 
 

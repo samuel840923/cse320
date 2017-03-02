@@ -59,18 +59,13 @@ int main(int argc, char *argv[]) {
 
     // Print out title for first test
     printf("=== Test1: Allocation test ===\n");
-    int *value1 = sf_malloc(4000);
+
+    int *value1 = sf_malloc(65);
+int *b = sf_malloc(93);
+sf_realloc(value1,4000);
+*b=5;
     sf_snapshot(true);
-int *b = sf_malloc(4000);
-    sf_snapshot(true);
-    press_to_cont();
-int *c = sf_malloc(4000);
-    sf_snapshot(true);
-    press_to_cont();
-int *d = sf_malloc(4000);
-    sf_snapshot(true);
-    press_to_cont();
-int *e = sf_malloc(4000);
+
 info pt = {0,0,0,0,0,0};
     info *ptr = &pt;
 
@@ -83,10 +78,6 @@ info pt = {0,0,0,0,0,0};
     printf("peak-> %lf\n", ptr->peakMemoryUtilization);
     press_to_cont();
 *value1=1;
-*b=2;
-*c=3;
-*d=4;
-*e = 1;
     //sf_varprint(value3);
 
 
