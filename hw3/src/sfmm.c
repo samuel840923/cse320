@@ -26,6 +26,7 @@ void removeFree(void*ptr);
 int checkRight(void* pt);
 int checkLeft(void*pt);
 void flipAlloc(void*ptr,uint64_t blck_size ,size_t bit);
+int checksize(void* ptr);
 /*
 stat variable
 */
@@ -233,12 +234,27 @@ void *sf_realloc(void *ptr, size_t size) {
 		errno = EINVAL;
 			return NULL;
 		}
+	if(checksize(ptr)==0){
+	errno = EINVAL;
+	return NULL;
+}
+	uint64_t splinterHead = (*((sf_header*)ptr-1)).splinter;
+	uint64_t splintersize = (*((sf_header*)ptr-1)).splinter_size;
+	if((splinterHead==1)&&(splintersize==0)){
+		errno = EINVAL;
+		return NULL;
+	}
 	uint64_t checkheader_bit = (*((sf_header*)ptr-1)).alloc;
 	uint64_t offe =  (*((sf_header*)ptr-1)).block_size<<4;
 	offe = (offe-16)/(sizeof(sf_footer));
 	uint64_t checkfoot_bit = (*((sf_footer*)ptr+offe)).alloc;
+	uint64_t splinterfoot = (*((sf_footer*)ptr+offe)).splinter;
 	if(checkfoot_bit!=1||checkheader_bit!=1){
 		errno=EINVAL;
+		return NULL;
+	}
+	if(splinterfoot!=splinterHead){
+		errno = EINVAL;
 		return NULL;
 	}
 	uint64_t pad = (*((sf_header*)ptr-1)).padding_size;
@@ -435,13 +451,33 @@ return;
 }
 
 sf_header currP = *((sf_header*)ptr-1);
+uint64_t header_blocksize_check = currP.block_size<<4;
+if(checksize(ptr)==0){
+	errno = EINVAL;
+	return;
+}
+if((currP.splinter==1)&&(currP.splinter_size==0)){
+	errno = EINVAL;
+	return;
+}
 uint64_t offe =  (*((sf_header*)ptr-1)).block_size<<4;
 offe = (offe-16)/(sizeof(sf_footer));
 uint64_t checkfoot_bit = (*((sf_footer*)ptr+offe)).alloc;
+uint64_t splinter_footer_bit = (*((sf_footer*)ptr+offe)).splinter;
+uint64_t checkblock_foot = (*((sf_footer*)ptr+offe)).block_size<<4;
 if(currP.alloc==0||checkfoot_bit==0){
 	errno = EINVAL;
 	return;
 }
+if(checkblock_foot!=header_blocksize_check){
+	errno = EINVAL;
+	return;
+}
+if(splinter_footer_bit!=(currP.splinter)){
+	errno = EINVAL;
+	return;
+}
+
 uint64_t requested = currP.requested_size;
 uint64_t pd = currP.padding_size;
 uint64_t splll = currP.splinter_size;
@@ -705,4 +741,20 @@ void flipAlloc(void*ptr,uint64_t blck_size ,size_t bit){
 		 uint64_t blocks = blck_size-8;
 		blocks = (blocks)/sizeof(sf_footer);
 		(*((sf_footer*)ptr+blocks)).alloc = bit;
+}
+int checksize(void* ptr){
+	void *check = ptr;
+	check = (char*)ptr-8;
+	sf_header header = *(sf_header*)check;
+ 	uint64_t spl = header.splinter_size;
+ 	uint64_t pad = header.padding_size;
+ 	uint64_t goalblck = header.block_size<<4;
+ 	uint64_t requested = header.requested_size;
+
+ 	uint64_t needed = spl+pad+requested+16;
+ 	if(needed==goalblck)
+ 		return 1;
+ 	else
+ 		return 0;
+
 }

@@ -433,7 +433,46 @@ cr_assert(freelist_head->next->header.alloc==0, "is free!");
  cr_assert(ptr->coalesces==2, "2 coal");
  cr_assert(*moved==12313, "shouldnt change");
 cr_assert(ptr->peakMemoryUtilization==(2137.0/4096),"is not equal" );
-
+void* allc = moved;
+ allc = (char*)allc- 8;
+  sf_header *sfHeader = (sf_header *)allc;
+ cr_assert(sfHeader->alloc == 1, "Alloc bit in header is not 1\n");
+ cr_assert(sfHeader->block_size<<4 == 1120, "Alloc block size in header is not 1120\n");
+sf_footer *sfFooter = (sf_footer *) ((char*)allc + (sfHeader->block_size << 4) - 8);
+ cr_assert(sfFooter->alloc == 1, "Alloc bit in the footer is not 1!\n");
+}
+Test(sf_memsuite, invalid_header_footer_free, .init = sf_mem_init, .fini = sf_mem_fini){
+  sf_header header_test= {1,1,48,21,0,11,0};
+  void *erro = sf_malloc(21);
+  erro = (char*)erro- 8;
+  *(sf_header*)erro = header_test;
+   erro = (char*)erro+ 8;
+  sf_free(erro);
+  cr_assert(errno==EINVAL,"errno should be set");
+}
+Test(sf_memsuite, invalid_header_footer_realloc, .init = sf_mem_init, .fini = sf_mem_fini){
+  sf_header header_test= {1,1,48,21,0,11,0};
+  void *erro = sf_malloc(21);
+  erro = (char*)erro- 8;
+  *(sf_header*)erro = header_test;
+   erro = (char*)erro+ 8;
+  void* test = sf_realloc(erro,200);
+  cr_assert(errno==EINVAL,"errno should be set");
+  cr_assert(test==NULL,"errno should be set");
+}
+Test(sf_memsuite, invalid_header_footer_realloc_2, .init = sf_mem_init, .fini = sf_mem_fini){
+  sf_header header_test= {1,0,48,21,0,11,0};
+  sf_footer footer_test = {1,1,48};
+  void *erro = sf_malloc(21);
+  erro = (char*)erro- 8;
+  *(sf_header*)erro = header_test;
+  uint64_t block_s = (*(sf_header*)erro).block_size<<4;
+  uint64_t off = (block_s-8)/sizeof(sf_footer);
+  (*((sf_footer*)erro+off))= footer_test;
+   erro = (char*)erro+ 8;
+  void* test = sf_realloc(erro,200);
+  cr_assert(errno==EINVAL,"errno should be set");
+  cr_assert(test==NULL,"errno should be set");
 }
 
 
