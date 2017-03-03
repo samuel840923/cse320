@@ -474,6 +474,20 @@ Test(sf_memsuite, invalid_header_footer_realloc_2, .init = sf_mem_init, .fini = 
   cr_assert(errno==EINVAL,"errno should be set");
   cr_assert(test==NULL,"errno should be set");
 }
+Test(sf_memsuite, invalid_header_footer_realloc_3, .init = sf_mem_init, .fini = sf_mem_fini){
+  sf_header header_test= {1,0,48,21,0,11,0};
+  sf_footer footer_test = {1,0,48};
+  void *erro = sf_malloc(21);
+  erro = (char*)erro- 8;
+  *(sf_header*)erro = header_test;
+  uint64_t block_s = (*(sf_header*)erro).block_size<<4;
+  uint64_t off = (block_s-8)/sizeof(sf_footer);
+  (*((sf_footer*)erro+off))= footer_test;
+   erro = (char*)erro+ 8;
+  void* test = sf_realloc(erro,200);
+  cr_assert(errno==EINVAL,"errno should be set");
+  cr_assert(test==NULL,"errno should be set");
+}
 
 
 
