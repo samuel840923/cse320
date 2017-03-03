@@ -1,0 +1,33 @@
+Test,Points,OutOf,Notes
+Usage,2,2,RETURN VALUE: CORRECT PASSED CASE 
+Usage with valid args,1.0,1.0,RETURN VALUE: CORRECT PASSED CASE 
+Invalid args,0.5,1.0,RETURN VALUE: CORRECT FAILED CASE: DIFF 
+Input file does not exist,1.0,1.0,RETURN VALUE: CORRECT PASSED CASE 
+Check A5000 flag,2,2,RETURN VALUE: CORRECT PASSED CASE 
+Valid arg and invalid -a,0.5,1.0,RETURN VALUE: CORRECT FAILED CASE: DIFF 
+Dictionary file does not exists,1.0,1.0,RETURN VALUE: CORRECT PASSED CASE 
+"dictionary1: correct words in simple1 (no new words, no symbols)",0,3.5,RETURN VALUE: EXPECTED 0 RECEIVED 1 FAILED CASE: DIFF 
+"dictionary1: unchanged simple2 (no new words, no symbols, no words to correct)",0,3.5,RETURN VALUE: EXPECTED 0 RECEIVED 1 FAILED CASE: DIFF 
+"dictionary1: new word in simple3 check output (no symbols, add 1 word to dictionary)",3.5,3.5,RETURN VALUE: CORRECT PASSED CASE 
+"dictionary1: new word in simple3 check dictionary (no symbols, add 1 word to dictionary)",3.5,3.5,RETURN VALUE: CORRECT DICTIONARY IS VALID 
+simple1: output to file that exists,0,3.5,RETURN VALUE: EXPECTED 0 RECEIVED 1 FAILED CASE: DIFF 
+simple1: output to file that does not exists,0,3.5,RETURN VALUE: EXPECTED 0 RECEIVED 1 FAILED CASE: DIFF 
+dictionary2: correct medium1 (pre/post symbols),0,2.5,RETURN VALUE: EXPECTED 0 RECEIVED 1 FAILED CASE: DIFF 
+dictionary2: unchanged medium2 (pre/post symbols),0,2.5,RETURN VALUE: EXPECTED 0 RECEIVED 1 FAILED CASE: DIFF 
+"dictionary2: new word in medium3 check output (pre/post symbols, 2 new words)",2.5,2.5,RETURN VALUE: CORRECT PASSED CASE 
+"dictionary2: new word in medium3 check dictionary (pre/post symbols, 2 new words)",2.5,2.5,RETURN VALUE: CORRECT DICTIONARY IS VALID 
+medium1: output to file that exists,0,2.5,RETURN VALUE: EXPECTED 0 RECEIVED 1 FAILED CASE: DIFF 
+medium1: output to file that does not exists,0,2.5,RETURN VALUE: EXPECTED 0 RECEIVED 1 FAILED CASE: DIFF 
+"dictionary3: correct hard1 (no new words, symbols in/pre/post words)",0,2.5,RETURN VALUE: EXPECTED 0 RECEIVED 1 FAILED CASE: DIFF 
+"dictionary3: unchanged hard2 (no corrections, symbols in/pre/post words)",0,2.5,RETURN VALUE: EXPECTED 0 RECEIVED 1 FAILED CASE: DIFF 
+dictionary3: 2 new words in hard3 check output,2.5,2.5,RETURN VALUE: CORRECT PASSED CASE 
+dictionary3: 2 new word in hard3 check dictionary,2.5,2.5,RETURN VALUE: CORRECT DICTIONARY IS VALID 
+hard1: output to file that exists,0,2.5,RETURN VALUE: EXPECTED 0 RECEIVED 1 FAILED CASE: DIFF 
+hard1: output to file that does not exists,0,2.5,RETURN VALUE: EXPECTED 0 RECEIVED 1 FAILED CASE: DIFF 
+statistics for simple1,0,2,RETURN VALUE: EXPECTED 0 RECEIVED 1 FAILED CASE: DIFF 
+statistics for medium1,0,2,RETURN VALUE: EXPECTED 0 RECEIVED 1 FAILED CASE: DIFF 
+statistics for hard1,0,2,RETURN VALUE: EXPECTED 0 RECEIVED 1 FAILED CASE: DIFF 
+memory usage for simple1,0,3,RETURN VALUE: EXPECTED 0 RECEIVED 1 FAILED CASE 
+memory usage for medium1,0,3,RETURN VALUE: EXPECTED 0 RECEIVED 1 FAILED CASE 
+memory usage for hard1,0,3,RETURN VALUE: EXPECTED 0 RECEIVED 1 FAILED CASE 
+Total,25.0,75.0,
