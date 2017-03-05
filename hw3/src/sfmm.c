@@ -626,7 +626,7 @@ if((unsigned long) start ==((unsigned long)((sf_header*)ptr-1))){
 		insertFree(ptr);
 	}
 
-	if(nextP.alloc == 1){
+	else if(nextP.alloc == 1){
 		ptr =((sf_header*)ptr-1);
 		putBlock(ptr,0,0,block_size,0,0,0);
 		//flipAlloc(ptr,block_size,0);
