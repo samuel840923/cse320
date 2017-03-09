@@ -510,7 +510,7 @@ sf_free_header *curr = head;
 int min =-1;
 			while(curr!=NULL){
 				size_t curr_size = curr->header.block_size<<4;
-				if(dreamS<curr_size){
+				if(dreamS<=curr_size){
 					int temp = curr_size-dreamS;
 					if(min==-1){
 						best = curr;

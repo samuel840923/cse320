@@ -247,6 +247,8 @@ Test(sf_memsuite, realloc_to_larger_with_space_after_2, .init = sf_mem_init, .fi
   cr_assert((*((sf_header*)test)).block_size<<4==96, "new realloc should be 96");
   cr_assert((*((sf_header*)test)).padding_size==0, "0 padding needed");
    cr_assert(ptr->padding==5,"total padding is 5");
+    cr_assert((*((sf_header*)x-1)).block_size<<4==48,"total padding is 5");
+
 }
 Test(sf_memsuite, two_coale, .init = sf_mem_init, .fini = sf_mem_fini){
 
@@ -511,6 +513,30 @@ Test(sf_memsuite, realloc_to_smaller_space_with_splinter_merging, .init = sf_mem
   cr_assert(freelist_head->header.block_size<<4==3936,"wrong you have %zu",freelist_head->header.block_size<<4);
   cr_assert((*((sf_header*)z-1)).block_size<<4==48,"wrong block size should be %zu",(*((sf_header*)y-1)).block_size);
   cr_assert(*y==10,"should not change y");
+
+}
+Test(sf_memsuite, malloc_same_free_size, .init = sf_mem_init, .fini = sf_mem_fini) {
+  int *x = sf_malloc(32);
+  int *y = sf_malloc(48);
+  int *z = sf_malloc(48);
+  int *use_this = y;
+  sf_free(y);
+  int *newS = sf_malloc(48);
+  *x=1;
+  *z=1;
+  info pt = {0,0,0,0,0,0};
+  info *ptr = &pt;
+  sf_info(ptr);
+   cr_assert((unsigned long)use_this==(unsigned long)newS,"should use the same block");
+   sf_header test = *((sf_header*)newS-1);
+   uint64_t offset = (test.block_size<<4)-16;
+   offset = offset/sizeof(sf_footer);
+    cr_assert(test.block_size<<4==64,"should be 64");
+     cr_assert(test.alloc==1,"should be 1");
+     sf_footer test2 = *((sf_footer*)newS+offset);
+     cr_assert(test2.alloc==1,"should be 1");
+      cr_assert(test2.block_size<<4==64,"should be 64");
+
 
 }
 
