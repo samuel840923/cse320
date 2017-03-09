@@ -257,6 +257,10 @@ void *sf_realloc(void *ptr, size_t size) {
 		errno = EINVAL;
 		return NULL;
 	}
+	if(size==0){
+		sf_free(ptr);
+		return NULL;
+	}
 	uint64_t pad = (*((sf_header*)ptr-1)).padding_size;
 	uint64_t spll = (*((sf_header*)ptr-1)).splinter_size;
 	uint64_t req_size = (*((sf_header*)ptr-1)).requested_size;
