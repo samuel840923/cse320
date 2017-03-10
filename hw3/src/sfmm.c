@@ -418,11 +418,14 @@ void *sf_realloc(void *ptr, size_t size) {
 							insertFree(freeH);
 						}
 						freeH = best_fit(freelist_head,minS);
-						if(checkRight(ptr)==1){
+			if(checkRight(ptr)==1){
+							if(max_payload<total_payload)
+			    			 max_payload = total_payload;
 						uint64_t off = currblck/sizeof(sf_header);
 			uint64_t nextsize =  (*((sf_header*)ptr+off)).block_size<<4;
 			int c = (nextsize+currblck)-minS;
 			 if((c>=0)){
+
 			 	 if(max_payload<total_payload)
 					max_payload = total_payload;
 
