@@ -704,6 +704,7 @@ if(currA->prev==NULL&&currA->next==NULL){
 }
 else if(currA->prev==NULL){
 	freelist_head = currA->next;
+	currA->next->prev=NULL;
 }
 else if(currA->next==NULL){
 	currA->prev->next=NULL;
