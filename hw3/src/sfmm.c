@@ -375,7 +375,21 @@ void *sf_realloc(void *ptr, size_t size) {
 		if(freeH ==NULL){
 			uint64_t off_new = currblck/sizeof(sf_header);
 			if(checkRight(ptr)==1||((unsigned long)((sf_header*)ptr+off_new))==(unsigned long)sf_sbrk(0)){
-			if((freeH=sf_sbrk(size+padding+16-currblck))==(void *) -1){
+				uint64_t requested_size =0;
+				if(((unsigned long)((sf_header*)ptr+off_new))==(unsigned long)sf_sbrk(0)){
+					 requested_size= size+padding+16-currblck;
+					}
+				else{
+					sf_header nextfreel = *((sf_header*)ptr+off_new);
+					uint64_t nextfreeS = nextfreel.block_size<<4;
+					uint64_t test_off = nextfreeS+currblck;
+					test_off = test_off/sizeof(sf_header);
+					if(((unsigned long)((sf_header*)ptr+test_off))==(unsigned long)sf_sbrk(0))
+						requested_size = size+padding+16-currblck;
+					else
+						requested_size = size+padding+16;
+					}
+			if((freeH=sf_sbrk(requested_size))==(void *) -1){
 						errno = ENOMEM;
 						splint_total+=spll;
 						padding_total+=pad;
