@@ -217,7 +217,7 @@ Test(sf_memsuite, realloc_to_larger_with_space_after, .init = sf_mem_init, .fini
   cr_assert(ptr->allocatedBlocks==3,"only 3 is currently allocated");
   cr_assert(*y==10,"should not change y");
   cr_assert(freelist_head->header.block_size<<4 ==48,"should create a freelist of 48");
-  cr_assert(ptr->coalesces==1, "1 coal");
+  cr_assert(ptr->coalesces==0, "0 coal");
   cr_assert((*((sf_header*)test)).block_size<<4==48, "new realloc should be 48");
   cr_assert((*((sf_header*)test)).padding_size==12, "12 padding needed");
    cr_assert(ptr->padding==13,"total padding is 13");
@@ -243,7 +243,7 @@ Test(sf_memsuite, realloc_to_larger_with_space_after_2, .init = sf_mem_init, .fi
   cr_assert(*check==10,"should not change z");
   cr_assert(freelist_head->header.block_size<<4 ==3920,"should create a freelist of 3920");
   cr_assert(freelist_head->next==NULL,"should only have one free list");
-  cr_assert(ptr->coalesces==1, "1 coal");
+  cr_assert(ptr->coalesces==0, "0 coal");
   cr_assert((*((sf_header*)test)).block_size<<4==96, "new realloc should be 96");
   cr_assert((*((sf_header*)test)).padding_size==0, "0 padding needed");
    cr_assert(ptr->padding==5,"total padding is 5");
@@ -536,9 +536,8 @@ Test(sf_memsuite, malloc_same_free_size, .init = sf_mem_init, .fini = sf_mem_fin
      sf_footer test2 = *((sf_footer*)newS+offset);
      cr_assert(test2.alloc==1,"should be 1");
       cr_assert(test2.block_size<<4==64,"should be 64");
+cr_assert(freelist_head->header.block_size<<4==3920,"should be 3920 block size");
+cr_assert(freelist_head->next==NULL,"only one");
 
 
 }
-
-
-

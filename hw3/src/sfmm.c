@@ -343,7 +343,7 @@ void *sf_realloc(void *ptr, size_t size) {
 			 if((c>=0)){
 			 	 if(max_payload<total_payload)
 					max_payload = total_payload;
-			 	co_times++;
+
 			 	uint64_t unused = (nextsize+currblck)-minS;
 			 	if(unused<32){
 			 		void* nextFree = ((sf_header*)ptr+off);
@@ -373,6 +373,19 @@ void *sf_realloc(void *ptr, size_t size) {
 		uint64_t content = currblck-16;
 		void *freeH = best_fit(freelist_head,minS);
 		if(freeH ==NULL){
+			uint64_t off_new = currblck/sizeof(sf_header);
+			if(checkRight(ptr)==1||((unsigned long)((sf_header*)ptr+off_new))==(unsigned long)sf_sbrk(0)){
+			if((freeH=sf_sbrk(size+padding+16-currblck))==(void *) -1){
+						errno = ENOMEM;
+						splint_total+=spll;
+						padding_total+=pad;
+						splinter_block++;
+						total_payload+=req_size;
+						total_payload-=size;
+							return NULL;
+						}
+					}
+			else{
 			if((freeH=sf_sbrk(size+padding+16))==(void *) -1){
 						errno = ENOMEM;
 						splint_total+=spll;
@@ -382,6 +395,7 @@ void *sf_realloc(void *ptr, size_t size) {
 						total_payload-=size;
 							return NULL;
 						}
+					}
 						 uint64_t  estimate = (unsigned long)sf_sbrk(0)-(unsigned long)freeH;
 							totalsize+=estimate;
 						if( totalsize>(4*4096)){
@@ -404,8 +418,44 @@ void *sf_realloc(void *ptr, size_t size) {
 							insertFree(freeH);
 						}
 						freeH = best_fit(freelist_head,minS);
-					}
-			 if(max_payload<total_payload)
+			if(checkRight(ptr)==1){
+							if(max_payload<total_payload)
+			    			 max_payload = total_payload;
+						uint64_t off = currblck/sizeof(sf_header);
+			uint64_t nextsize =  (*((sf_header*)ptr+off)).block_size<<4;
+			int c = (nextsize+currblck)-minS;
+			 if((c>=0)){
+
+			 	 if(max_payload<total_payload)
+					max_payload = total_payload;
+
+			 	uint64_t unused = (nextsize+currblck)-minS;
+			 	if(unused<32){
+			 		void* nextFree = ((sf_header*)ptr+off);
+			 		removeFree(nextFree);
+			 		int s =1;
+			 		if(unused==0)
+			 			s=0;
+			 		else
+			 			splinter_block++;
+			 		splint_total+=unused;
+			 		putBlock(ptr,1,s,nextsize+currblck,size,unused,padding);
+			 	ptr =((sf_header*)ptr+1);
+				return ptr;
+			 	}
+			 	void *freelist = ptr;
+			 	uint64_t off = minS/sizeof(sf_header);
+			 	freelist = ((sf_header*)ptr+off);
+			 	putBlock(freelist,0,0,unused,0,0,0);
+		 		insertFree(freelist);
+		 		putBlock(ptr,1,0,minS,size,0,padding);
+		 		ptr =((sf_header*)ptr+1);
+				return ptr;
+					 }
+				}
+			}
+
+			  if(max_payload<total_payload)
 			  max_payload = total_payload;
 
 				uint64_t freeblc = ((*(sf_header*)freeH)).block_size<<4;
