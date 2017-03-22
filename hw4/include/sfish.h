@@ -11,7 +11,9 @@
 #include <sys/wait.h>
 #include <sys/stat.h>
 #include <fcntl.h>
+#include <signal.h>
 
+int flag ;
 char** parse_command(char* s,int size);
 int getArgc(char* s);
 int execute_process(int arg_c, char** arg_v,char *tobefree,char *free2,char** envp);
@@ -37,4 +39,6 @@ int fork_second(char** arg_v,int pd[],int pd2[],int times,char** envp);
 int fork_third(char** arg_v,int pd[],char** envp);
 int checkValid(int arg_c,char** arg_v);
 int checkValid_pipe(int arg_c,char** arg_v);
+int conversion_string(char*s);
+void sigarm_handler(int length);
 #endif

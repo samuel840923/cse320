@@ -628,6 +628,10 @@ int fork_first(char** arg_v,int pd[],char** envp){
 			if(execve(path,arg_v,envp)==-1){
 				if(free_yes==1)
 					free(path);
+				 int length = find_argC(arg_v);
+	  			  for(int i=0 ;i<length;i++)
+	    				free(arg_v[i]);
+	   				 free(arg_v);
 				exit(0);
 			}
 		}
@@ -667,7 +671,11 @@ int fork_second(char** arg_v,int pd[],int pd2[],int times,char** envp){
 			if(execve(path,arg_v,envp)==-1){
 				if(free_yes==1)
 					free(path);
-				exit(0);
+				 int length = find_argC(arg_v);
+	  			  for(int i=0 ;i<length;i++)
+	    				free(arg_v[i]);
+	   				 free(arg_v);
+	   				 exit(0);
 			}
 		}
 		else{
@@ -769,6 +777,41 @@ int checkValid_pipe(int arg_c,char** arg_v){
 	if(pipe>2)
 		return -1;
 	return 0;
+}
+int conversion_string(char*s){
+	int num = 0;
+	int length = strlen(s);
+	for(int i=0;i<length;i++){
+		if(s[i]>='0'&&s[i]<='9'){
+			num = (num*10)+(s[i]-'0');
+		}
+		else
+			return -1;
+	}
+	if(num!=0)
+	flag = num;
+	return num;
+}
+void sigarm_handler(int length){
+int size =0;
+char buffer[12];
+int t = flag;
+while(t!=0){
+	size++;
+	t =t/10;
+}
+t = flag;
+int len = size;
+size = size-1;
+while(t!=0){
+buffer[size] =(t% 10)+'0';
+t =t/10;
+size--;
+}
+buffer[len] ='\0';
+	write(1,"Your ",5);
+	write(1,buffer,len);
+	write(1," second timer has finished!",27);
 }
 
 

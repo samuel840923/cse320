@@ -4,7 +4,6 @@
 /*
  * As in previous hws the main function must be in its own file!
  */
-
 int main(int argc, char const *argv[], char* envp[]){
     /* DO NOT MODIFY THIS. If you do you will get a ZERO. */
     rl_catch_signals = 0;
@@ -32,6 +31,21 @@ int main(int argc, char const *argv[], char* envp[]){
        }
        else if(strcmp(arg_v[0],"pwd")==0){
         pwd_sfish(arg_c,arg_v,cmd,prompt);
+       }
+       else if(strcmp(arg_v[0],"alarm")==0){
+        if(arg_c==2){
+           int a =  conversion_string(arg_v[1]);
+           if(a<=0){
+            write(2,"invalid arg",strlen("invalid arg"));
+            write(2,"\n",1);
+           }
+           else{
+
+            signal(SIGALRM,sigarm_handler);
+            alarm(a);
+           }
+
+        }
        }
        else
          execute_process(arg_c,arg_v,cmd,prompt,envp);
