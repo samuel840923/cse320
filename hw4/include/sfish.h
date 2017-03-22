@@ -20,7 +20,7 @@ int execute_process(int arg_c, char** arg_v,char *tobefree,char *free2,char** en
 void print_help(int arg_c,char** arg_v);
 char* cd_sfish(int arg_c,char** arg_v);
 char* modif_prompt(char* new_cd);
-char* pwd_sfish(int arg_c,char** arg_v,char *tobefree,char *free2);
+char* pwd_sfish(int arg_c,char** arg_v);
 char* searchPath(char* s,char*command);
 char** redirection_parse(int arg_c,char** arg_v);
 int redirection_check(int arg_c,char** arg_v);
@@ -41,4 +41,6 @@ int checkValid(int arg_c,char** arg_v);
 int checkValid_pipe(int arg_c,char** arg_v);
 int conversion_string(char*s);
 void sigarm_handler(int length);
+void sigChild_handler(int sig, siginfo_t *help, void *no);
+void SIGUSR2_handler(int f);
 #endif

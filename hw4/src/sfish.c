@@ -1,7 +1,5 @@
 #include "sfish.h"
 char** parse_command(char* s,int arg_c){
-
-
 if(arg_c==0)
 	return NULL;
 int length = strlen(s);
@@ -165,7 +163,7 @@ char* modif_prompt(char* s){
 	char buff[256];
 	char* current = getcwd(buff,256);
 	char netid[] = "samuchen : ";
-	char * prompt = malloc(strlen(netid)+strlen(current)+4);
+	char * prompt = calloc(strlen(netid)+strlen(current)+4,1);
 	strcpy(prompt,netid);
 	strcat(prompt,current);
 	strcat(prompt," $ \0");
@@ -180,38 +178,13 @@ char* modif_prompt(char* s){
 	return prompt;
 	}
 }
-char* pwd_sfish(int arg_c,char** arg_v, char* tobefree, char* free2){
-	int status=0;
+char* pwd_sfish(int arg_c,char** arg_v){
 	char buff[256];
 	char* current = getcwd(buff,256);
-	pid_t pid;
-	int check = redirection_check(arg_c,arg_v);
-	int fd =1;
-	pid = fork();
-	if(pid==0){
-		if(check==1){
-			int fileindex = getfile_index(arg_c,arg_v,">");
-			if(arg_v[fileindex]!=NULL){
-			fd = open(arg_v[fileindex],O_WRONLY|O_CREAT,0777);
-			if(fd!=-1){
-			dup2(fd,1);
-			close(fd);
-				}
-			}
-		}
-		printf("%s\n",current);
-		for(int i=0;i<=arg_c;i++){
-            free(arg_v[i]);
-        }
-        free(arg_v);
-        free(tobefree);
-        free(free2);
-		exit(0);
+	write(1,current,strlen(current));
+	write(1,"\n",1);
 
-	}
-	else{
-		wait(&status);
-	}
+
 return current;
 }
 int execute_process(int arg_c, char** arg_v,char *tobefree,char *free2,char** envp){
@@ -240,8 +213,19 @@ int chk = redirection_check(arg_c,arg_v);
 		return -1;
 	}
 	}
+		pid_t pid;
+if(strcmp(arg_v[0],"pwd")==0){
+	int st;
+	if((pid=fork())==0){
+	pwd_sfish(arg_c,arg_v);
+	exit(0);
+	}
+	else{
+		wait(&st);
+	}
+	return 0;
+}
 if(strchr(arg_v[0],'/')!=NULL){
-	pid_t pid;
 	int status = stat(arg_v[0],&file_stat);
 	if(status!=0){
 		write(2,"file not exist",strlen("file not exist"));
@@ -382,7 +366,8 @@ int redirection_exec(int arg_c,char** arg_v,char *tobefree,char *free2,char** en
 
     if(strcmp(">",arg_v[index])==0){
     	if(stat(path,&file_stat)!=0){
-    		printf("%s\n","file was not found");
+    		write(2,"file was not found",strlen("file was not found"));
+    		write(2,"\n",1);
     		for(int i=0;i<index;i++)
 			free(real_arg_v[i]);
 			free(real_arg_v);
@@ -395,13 +380,20 @@ int redirection_exec(int arg_c,char** arg_v,char *tobefree,char *free2,char** en
 		int fd = open(filename,O_WRONLY|O_CREAT,0777);
 		dup2(fd,1);
 		close(fd);
+		if(strcmp(arg_v[0],"pwd")==0){
+			pwd_sfish(arg_c,arg_v);
+			exit(0);
+		}
+		else{
 		int i = execve(path,real_arg_v,envp);
 		if(i==-1){
-			printf("something is wrong");
+			write(2,"somthing is wrong",strlen("somthing is wrong"));
+    		write(2,"\n",1);
 			freeAll(free2,tobefree,index,real_arg_v,arg_c,arg_v,free_yes,path);
 			exit(-1);
 
-		}
+				}
+		   }
 		}
 		else{
 			wait(&st);
@@ -415,7 +407,8 @@ int redirection_exec(int arg_c,char** arg_v,char *tobefree,char *free2,char** en
     }
     else if(strcmp("<",arg_v[index])==0){
     	if(stat(path,&file_stat)!=0){
-    		printf("%s\n","file was not found");
+    		write(2,"file was not found",strlen("file was not found"));
+    		write(2,"\n",1);
     		for(int i=0;i<index;i++)
 			free(real_arg_v[i]);
 			free(real_arg_v);
@@ -427,7 +420,8 @@ int redirection_exec(int arg_c,char** arg_v,char *tobefree,char *free2,char** en
 			char* filename = arg_v[index+1];
 			int fd = open(filename,O_RDONLY);
 		if(fd==-1){
-			printf("file does not exist");
+			write(2,"file does not exit",strlen("file does not exit"));
+    		write(2,"\n",1);
 			freeAll(free2,tobefree,index,real_arg_v,arg_c,arg_v,free_yes,path);
 			exit(-1);
 		}
@@ -437,17 +431,23 @@ int redirection_exec(int arg_c,char** arg_v,char *tobefree,char *free2,char** en
 		if((strcmp(arg_v[index+2],">")==0)){
 			char* outputfile = arg_v[index+3];
 			int fd2 = open(outputfile,O_WRONLY|O_CREAT,0777);
-			printf("%d\n",fd2);
 			dup2(fd2,1);
 			close(fd2);
 		}
+		if(strcmp(arg_v[0],"pwd")==0){
+			pwd_sfish(arg_c,arg_v);
+			exit(0);
+		}
+		else{
 		int i = execve(path,real_arg_v,envp);
 
 		    if(i==-1){
-			printf("something is wrong");
+			write(2,"somthing is wrong",strlen("somthing is wrong"));
+			write(2,"\n",1);
 			freeAll(free2,tobefree,index,real_arg_v,arg_c,arg_v,free_yes,path);
 			exit(-1);
 			}
+		}
 		}
 		else{
 			wait(&st);
@@ -482,7 +482,8 @@ int pipe_exec(int arg_c,char** arg_v,char *tobefree,char *free2,char** envp){
 	char** firstarg = pipe_parse_1(arg_c,arg_v);
 	int check = fork_first(firstarg,fd,envp);
 	if (check ==-1){
-		printf("%s\n","cannot execute file" );
+		write(2,"cannot find the program",strlen("cannot find the program"));
+		write(2,"\n",1);
 		close(fd[0]);
 	    close(fd[1]);
 	    int length = find_argC(firstarg);
@@ -496,7 +497,8 @@ int pipe_exec(int arg_c,char** arg_v,char *tobefree,char *free2,char** envp){
 	}
 	char** secondarg= pipe_parse_2(arg_c,arg_v);
 	if (check ==-1){
-		printf("%s\n","cannot execute file" );
+		write(2,"cannot find the program",strlen("cannot find the program"));
+		write(2,"\n",1);
 		close(fd[0]);
 	    close(fd[1]);
 	    int length = find_argC(secondarg);
@@ -617,7 +619,8 @@ int fork_first(char** arg_v,int pd[],char** envp){
 		free_yes=1;
 		}
 		if(stat(path,&file_stat)==-1){
-			printf("%s\n","--cannot find the program");
+			write(2,"cannot find the program",strlen("cannot find the program"));
+			write(2,"\n",1);
 			if(free_yes==1)
 			free(path);
 	        return -1;
@@ -625,14 +628,24 @@ int fork_first(char** arg_v,int pd[],char** envp){
 		if((pid=fork())==0){
 			dup2(pd[1],1);
 			close(pd[0]);
-			if(execve(path,arg_v,envp)==-1){
+			if(strcmp(arg_v[0],"pwd")==0){
+				pwd_sfish(0,0);
 				if(free_yes==1)
 					free(path);
-				 int length = find_argC(arg_v);
-	  			  for(int i=0 ;i<length;i++)
-	    				free(arg_v[i]);
-	   				 free(arg_v);
-				exit(0);
+			int length = find_argC(arg_v);
+	  		for(int i=0 ;i<length;i++)
+	    		free(arg_v[i]);
+	   		free(arg_v);
+			exit(0);
+			}
+			else if(execve(path,arg_v,envp)==-1){
+				if(free_yes==1)
+					free(path);
+			int length = find_argC(arg_v);
+	  		for(int i=0 ;i<length;i++)
+	    		free(arg_v[i]);
+	   		free(arg_v);
+			exit(0);
 			}
 		}
 		else{
@@ -655,7 +668,8 @@ int fork_second(char** arg_v,int pd[],int pd2[],int times,char** envp){
 		free_yes=1;
 		}
 		if(stat(path,&file_stat)==-1){
-			printf("%s\n","-cannot find the program");
+			write(2,"cannot find path",strlen("cannot find path"));
+			write(2,"\n",1);
 			if(free_yes==1)
 			free(path);
 	        return -1;
@@ -698,7 +712,8 @@ int fork_third(char** arg_v,int pd[],char** envp){
 		free_yes=1;
 		}
 		if(stat(path,&file_stat)==-1){
-			printf("%s\n","-cannot find the program");
+			write(2,"cannot find the program",strlen("cannot find the program"));
+			write(2,"\n",1);
 			if(free_yes==1)
 			free(path);
 	        return -1;
@@ -813,5 +828,18 @@ buffer[len] ='\0';
 	write(1,buffer,len);
 	write(1," second timer has finished!",27);
 }
-
+void sigChild_handler(int sig, siginfo_t *help, void *no){
+	write(1,"Child with PID ",strlen(" Child with PID"));
+	printf("%d",(help -> si_pid));
+	fflush(stdout);
+	write(1," has died. It spent ",strlen(" has died. It spent "));
+	write(1," milliseconds",strlen(" milliseconds"));
+	printf("%zu",help->si_utime);
+	fflush(stdout);
+	write(1,"\n",1);
+}
+void SIGUSR2_handler(int f){
+	write(1,"Well that was easy.",strlen("Well that was easy."));
+	write(1,"\n",1);
+}
 
