@@ -69,20 +69,28 @@ void print_help(int arg_c, char** arg_v){
 		return NULL;
 	}
 	if(arg_c==1) { //set the home path
-		char buff[256];
-		char *oldpath = getcwd(buff,256);
+		int size = 256;
+		char *oldpath=malloc(size);
+		while(getcwd(oldpath,size)==NULL){
+		size=size*2;
+		oldpath = realloc(oldpath,size);
+		}
 		char* homepath = getenv("HOME");
 		int check = chdir(homepath);
 		if(check==-1){
 			write(2,"cannot find the path",strlen("cannot find the path"));
+			write(2,"\n",1);
+			free(oldpath);
 			return NULL;
 		}
 		check = setenv("OLDPATH",oldpath,1);
 		if(check==-1){
 			write(2,"cannot set the path",strlen("cannot set the path"));
 			write(2,"\n",1);
+			free(oldpath);
 			return NULL;
 		}
+		free(oldpath);
 		return homepath;
 	}
 	 if(strcmp(arg_v[1],"-")==0) {
@@ -102,8 +110,12 @@ void print_help(int arg_c, char** arg_v){
 		return oldpath;
 	}
 	if(strcmp(arg_v[1],".")==0){
-		char buff[256];
-		char *current = getcwd(buff,256);
+		int size = 256;
+		char *current=malloc(size);
+		while(getcwd(current,size)==NULL){
+		size=size*2;
+		current = realloc(current,size);
+		}
 		if( current==NULL){
 			write(2,"no path",strlen("no path"));
 			write(2,"\n",1);
@@ -113,60 +125,80 @@ void print_help(int arg_c, char** arg_v){
 		if(status==-1){
 			write(2,"cannot change the path",strlen("cannot change the path"));
 			write(2,"\n",1);
+			free(current);
 			return NULL;
 		}
 		 status = setenv("OLDPATH",current,1);
 		if(status==-1){
-			write(2,"cannot change the path",strlen("cannot change the path"));
+			write(2,"cannot set the oldpath",strlen("cannot set the oldpath"));
 			write(2,"\n",1);
+			free(current);
 			return NULL;
 		}
 		return current;
 	}
 	if(strcmp(arg_v[1],"..")==0){
-		char buff[256];
-		char* current = getcwd(buff,256);
+		int size = 256;
+		char *current=malloc(size);
+		while(getcwd(current,size)==NULL){
+		size=size*2;
+		current = realloc(current,size);
+		}
 		int status = setenv("OLDPATH",current,1);
 		if(status==-1){
-			write(2,"cannot change the path",strlen("cannot change the path"));
+			write(2,"cannot set the oldpath",strlen("cannot set the oldpath"));
 			write(2,"\n",1);
+			free(current);
 			return NULL;
 		}
 		status = chdir("..");
 		if(status==-1){
 			write(2,"cannot get parent",strlen("cannot get parent"));
 			write(2,"\n",1);
+			free(current);
 			return NULL;
 		}
-		current = getcwd(buff,256);
+		getcwd(current,size);
 		return current;
 	}
-		char buff[256];
-		char* current = getcwd(buff,256);
+		int size = 256;
+		char *current=malloc(size);
+		while(getcwd(current,size)==NULL){
+		size=size*2;
+		current = realloc(current,size);
+		}
 		int status = setenv("OLDPATH",current,1);
 		if(status==-1){
 			write(2,"cannot set the path",strlen("cannot set the path"));
 			write(2,"\n",1);
+			free(current);
 			return NULL;
 		}
 		status = chdir(arg_v[1]);
 		if(status==-1){
 			write(2,"cannot change directory",strlen("cannot change directory"));
 			write(2,"\n",1);
+			free(current);
 			return NULL;
 		}
-		current = getcwd(buff,256);
+		 getcwd(current,size);
 		return current;
 }
 char* modif_prompt(char* s){
 	if(s==NULL){
-	char buff[256];
-	char* current = getcwd(buff,256);
+	int size = 256;
+	char *buff=malloc(size);
+	while(getcwd(buff,size)==NULL){
+		size=size*2;
+		buff = realloc(buff,size);
+	}
 	char netid[] = "samuchen : ";
-	char * prompt = calloc(strlen(netid)+strlen(current)+4,1);
+	char * prompt = calloc(strlen(netid)+strlen(buff)+4,1);
 	strcpy(prompt,netid);
-	strcat(prompt,current);
+	strcat(prompt,buff);
 	strcat(prompt," $ \0");
+	reprint = prompt;
+	free(buff);
 	return prompt;
 	}
 	else{
@@ -175,23 +207,29 @@ char* modif_prompt(char* s){
 	strcpy(prompt,netid);
 	strcat(prompt,s);
 	strcat(prompt," $ \0");
+	reprint=prompt;
 	return prompt;
 	}
 }
 char* pwd_sfish(int arg_c,char** arg_v){
-	char buff[256];
-	char* current = getcwd(buff,256);
-	write(1,current,strlen(current));
+
+	int size = 256;
+	char *buff=malloc(size);
+	while(getcwd(buff,size)==NULL){
+		size=size*2;
+		buff = realloc(buff,size);
+	}
+	write(1,buff,strlen(buff));
 	write(1,"\n",1);
+	free(buff);
 
-
-return current;
+return NULL;
 }
 int execute_process(int arg_c, char** arg_v,char *tobefree,char *free2,char** envp){
 struct stat file_stat;
 int st;
 int chk = redirection_check(arg_c,arg_v);
-	if(chk==1||chk==0){
+	if(chk==1||chk==0||chk==2){
 		if(checkValid(arg_c,arg_v)==0){
 		redirection_exec(arg_c,arg_v,tobefree,free2,envp);
 		return 0;
@@ -217,7 +255,15 @@ int chk = redirection_check(arg_c,arg_v);
 if(strcmp(arg_v[0],"pwd")==0){
 	int st;
 	if((pid=fork())==0){
+	if(arg_c==1)
 	pwd_sfish(arg_c,arg_v);
+	else{
+		  write(2,"invalid arg",strlen("invalid arg"));
+          write(2,"\n",1);
+	}
+	for(int i=0;i<arg_c;i++)
+		free(arg_v[i]);
+	free(arg_v);
 	exit(0);
 	}
 	else{
@@ -307,6 +353,16 @@ char** redirection_parse(int arg_c,char** arg_v){
 			break;
 		if(strcmp(arg_v[i],"<")==0)
 			break;
+		if(strcmp(arg_v[i],"2>")==0)
+			break;
+		if(strcmp(arg_v[i],"1>")==0)
+			break;
+		if(strcmp(arg_v[i],"&>")==0)
+			break;
+		if(strcmp(arg_v[i],">>")==0)
+			break;
+		if(strcmp(arg_v[i],"<<")==0)
+			break;
 		count++;
 		}
 
@@ -322,6 +378,18 @@ int redirection_check(int arg_c,char** arg_v){
 for(int i=0;i<arg_c;i++){
 	if(strcmp(arg_v[i],">")==0)
 		return 1;
+	if(strcmp(arg_v[i],"1>")==0){
+		return 2;
+	}
+	if(strcmp(arg_v[i],"2>")==0){
+		return 2;
+	}if(strcmp(arg_v[i],"&>")==0){
+		return 2;
+	}
+	if(strcmp(arg_v[i],">>")==0)
+		return 2;
+	if(strcmp(arg_v[i],"<<")==0)
+		return 2;
 	if(strcmp(arg_v[i],"<")==0)
 		return 0;
 	if(strcmp(arg_v[i],"|")==0)
@@ -342,6 +410,16 @@ int redirection_getfile(int arg_c,char** arg_v){
 	if(strcmp(arg_v[i],">")==0)
 		return i;
 	if(strcmp(arg_v[i],"<")==0)
+		return i;
+	if(strcmp(arg_v[i],"1>")==0)
+		return i;
+	if(strcmp(arg_v[i],"2>")==0)
+		return i;
+	if(strcmp(arg_v[i],"&>")==0)
+		return i;
+	if(strcmp(arg_v[i],">>")==0)
+		return i;
+	if(strcmp(arg_v[i],"<<")==0)
 		return i;
 	if(strcmp(arg_v[i],"|")==0)
 		return i;
@@ -364,7 +442,7 @@ int redirection_exec(int arg_c,char** arg_v,char *tobefree,char *free2,char** en
     	free_yes=1;
     }
 
-    if(strcmp(">",arg_v[index])==0){
+    if(strcmp(">",arg_v[index])==0||strcmp(arg_v[index],"1>")==0||strcmp(arg_v[index],">>")==0){
     	if(stat(path,&file_stat)!=0){
     		write(2,"file was not found",strlen("file was not found"));
     		write(2,"\n",1);
@@ -377,11 +455,31 @@ int redirection_exec(int arg_c,char** arg_v,char *tobefree,char *free2,char** en
 			}
 		if((pid = fork())==0){
 		char* filename = arg_v[index+1];
+		if(filename==NULL){
+			write(2,"file is empty",strlen("file is empty"));
+    		write(2,"\n",1);
+			freeAll(free2,tobefree,index,real_arg_v,arg_c,arg_v,free_yes,path);
+			exit(-1);
+		}
+		if(strcmp(arg_v[index],">>")==0){
+			int ap_fd=0;
+			if((ap_fd=open(filename,O_WRONLY|O_CREAT|O_APPEND,0777))==-1){
+			write(2,"cant open",strlen("cant open"));
+    		write(2,"\n",1);
+			freeAll(free2,tobefree,index,real_arg_v,arg_c,arg_v,free_yes,path);
+			exit(-1);
+			}
+			dup2(ap_fd,1);
+			close(ap_fd);
+		}
+		else{
 		int fd = open(filename,O_WRONLY|O_CREAT,0777);
 		dup2(fd,1);
 		close(fd);
+		}
 		if(strcmp(arg_v[0],"pwd")==0){
 			pwd_sfish(arg_c,arg_v);
+			freeAll(free2,tobefree,index,real_arg_v,arg_c,arg_v,free_yes,path);
 			exit(0);
 		}
 		else{
@@ -430,12 +528,19 @@ int redirection_exec(int arg_c,char** arg_v,char *tobefree,char *free2,char** en
 		if((arg_v[index+2]!=NULL))
 		if((strcmp(arg_v[index+2],">")==0)){
 			char* outputfile = arg_v[index+3];
+			if(outputfile==NULL){
+			write(2,"file does not exit",strlen("file does not exit"));
+    		write(2,"\n",1);
+			freeAll(free2,tobefree,index,real_arg_v,arg_c,arg_v,free_yes,path);
+			exit(-1);
+			}
 			int fd2 = open(outputfile,O_WRONLY|O_CREAT,0777);
 			dup2(fd2,1);
 			close(fd2);
 		}
 		if(strcmp(arg_v[0],"pwd")==0){
 			pwd_sfish(arg_c,arg_v);
+			freeAll(free2,tobefree,index,real_arg_v,arg_c,arg_v,free_yes,path);
 			exit(0);
 		}
 		else{
@@ -460,6 +565,102 @@ int redirection_exec(int arg_c,char** arg_v,char *tobefree,char *free2,char** en
 		}
 
     }
+    else if(strcmp(arg_v[index],"2>")==0||strcmp(arg_v[index],"&>")==0){
+    	if(stat(path,&file_stat)!=0){
+    		write(2,"file was not found",strlen("file was not found"));
+    		write(2,"\n",1);
+    		for(int i=0;i<index;i++)
+			free(real_arg_v[i]);
+			free(real_arg_v);
+			if(free_yes==1)
+			free(path);
+    		return -1;
+			}
+		if((pid = fork())==0){
+		char* filename = arg_v[index+1];
+		int fd = open(filename,O_WRONLY|O_CREAT,0777);
+		if(arg_v[index][0]=='&'){
+			if(fd==-1||dup2(fd,1)==-1){
+			freeAll(free2,tobefree,index,real_arg_v,arg_c,arg_v,free_yes,path);
+			exit(0);
+		}
+		}
+		if(fd==-1||dup2(fd,2)==-1){
+			freeAll(free2,tobefree,index,real_arg_v,arg_c,arg_v,free_yes,path);
+			exit(0);
+		}
+		close(fd);
+		if(strcmp(arg_v[0],"pwd")==0){
+			pwd_sfish(arg_c,arg_v);
+			freeAll(free2,tobefree,index,real_arg_v,arg_c,arg_v,free_yes,path);
+			exit(0);
+		}
+		else{
+		int i = execve(path,real_arg_v,envp);
+		if(i==-1){
+			write(2,"somthing is wrong",strlen("somthing is wrong"));
+    		write(2,"\n",1);
+			freeAll(free2,tobefree,index,real_arg_v,arg_c,arg_v,free_yes,path);
+			exit(-1);
+				}
+		   }
+		}
+		else{
+			wait(&st);
+			for(int i=0;i<index;i++)
+			free(real_arg_v[i]);
+			free(real_arg_v);
+			if(free_yes==1)
+			free(path);
+		}
+    }
+    else if(strcmp(arg_v[index],"<<")==0){
+    	if(stat(path,&file_stat)!=0){
+    		write(2,"file was not found",strlen("file was not found"));
+    		write(2,"\n",1);
+    		for(int i=0;i<index;i++)
+			free(real_arg_v[i]);
+			free(real_arg_v);
+			if(free_yes==1)
+			free(path);
+    		return -1;
+			}
+		if((pid = fork())==0){
+		//char* keyname = arg_v[index+1];
+		int pd [2];
+		int pi_cd = pipe(pd);
+		if(dup2(pd[1],0)==-1||pi_cd==-1){
+			write(2,"somthing is wrong",strlen("somthing is wrong"));
+    		write(2,"\n",1);
+			freeAll(free2,tobefree,index,real_arg_v,arg_c,arg_v,free_yes,path);
+			exit(-1);
+		}
+		//char *get =NULL;
+		if(strcmp(arg_v[0],"pwd")==0){
+			pwd_sfish(arg_c,arg_v);
+			freeAll(free2,tobefree,index,real_arg_v,arg_c,arg_v,free_yes,path);
+			exit(0);
+		}
+		else{
+		int i = execve(path,real_arg_v,envp);
+		if(i==-1){
+			write(2,"somthing is wrong",strlen("somthing is wrong"));
+    		write(2,"\n",1);
+			freeAll(free2,tobefree,index,real_arg_v,arg_c,arg_v,free_yes,path);
+			exit(-1);
+				}
+		   }
+		}
+		else{
+			wait(&st);
+			for(int i=0;i<index;i++)
+			free(real_arg_v[i]);
+			free(real_arg_v);
+			if(free_yes==1)
+			free(path);
+		}
+    }
+
  return 0;
 }
 void freeAll(char* free2,char* tobefree,int index,char** real_arg_v,int arg_c,char** arg_v,int free_yes,char* path){
@@ -619,7 +820,7 @@ int fork_first(char** arg_v,int pd[],char** envp){
 		free_yes=1;
 		}
 		if(stat(path,&file_stat)==-1){
-			write(2,"cannot find the program",strlen("cannot find the program"));
+			write(2,"cannot find file",strlen("cannot find file"));
 			write(2,"\n",1);
 			if(free_yes==1)
 			free(path);
@@ -629,7 +830,7 @@ int fork_first(char** arg_v,int pd[],char** envp){
 			dup2(pd[1],1);
 			close(pd[0]);
 			if(strcmp(arg_v[0],"pwd")==0){
-				pwd_sfish(0,0);
+				pwd_sfish(find_argC(arg_v),arg_v);
 				if(free_yes==1)
 					free(path);
 			int length = find_argC(arg_v);
@@ -639,6 +840,8 @@ int fork_first(char** arg_v,int pd[],char** envp){
 			exit(0);
 			}
 			else if(execve(path,arg_v,envp)==-1){
+				write(2,"cannot execute",strlen("cannot execute"));
+				write(2,"\n",1);
 				if(free_yes==1)
 					free(path);
 			int length = find_argC(arg_v);
@@ -683,6 +886,8 @@ int fork_second(char** arg_v,int pd[],int pd2[],int times,char** envp){
 
 			close(pd[1]);
 			if(execve(path,arg_v,envp)==-1){
+				write(2,"cannot execute",strlen("cannot execute"));
+				write(2,"\n",1);
 				if(free_yes==1)
 					free(path);
 				 int length = find_argC(arg_v);
@@ -722,6 +927,8 @@ int fork_third(char** arg_v,int pd[],char** envp){
 			dup2(pd[0],0);
 			close(pd[1]);
 			if(execve(path,arg_v,envp)==-1){
+				write(2,"cannot execute",strlen("cannot execute"));
+				write(2,"\n",1);
 				if(free_yes==1)
 					free(path);
 				 int length = find_argC(arg_v);
@@ -808,38 +1015,56 @@ int conversion_string(char*s){
 	return num;
 }
 void sigarm_handler(int length){
-int size =0;
 char buffer[12];
-int t = flag;
+parse_int(flag,buffer);
+write(1,"\n",1);
+	write(1,"Your ",5);
+	write(1,buffer,strlen(buffer));
+	write(1," second timer has finished!",27);
+	write(1,"\n",1);
+	write(1,reprint,strlen(reprint));
+}
+void sigChild_handler(int sig, siginfo_t *help, void *no){
+	write(1,"Child with PID ",strlen(" Child with PID"));
+	pid_t pid = help->si_pid;
+	char buffer[12];
+	parse_int(pid,buffer);
+	write(1,buffer,strlen(buffer));
+	write(1," has died. It spent ",strlen(" has died. It spent "));
+	clock_t total_time = (help->si_utime)+(help->si_stime);
+	total_time = total_time/CLOCKS_PER_SEC;
+	char buffer_time[12];
+	parse_int(total_time,buffer_time);
+	write(1,buffer_time,strlen(buffer_time));
+	write(1," milliseconds",strlen(" milliseconds"));
+	write(1,"\n",1);
+}
+void SIGUSR2_handler(int f){
+	write(1,"\n",1);
+	write(1,"Well that was easy.",strlen("Well that was easy."));
+	write(1,"\n",1);
+	write(1,reprint,strlen(reprint));
+}
+void parse_int(long int a, char buff[]){
+if(a!=0){
+int size =0;
+int t = a;
 while(t!=0){
 	size++;
 	t =t/10;
 }
-t = flag;
+t =a;
 int len = size;
 size = size-1;
 while(t!=0){
-buffer[size] =(t% 10)+'0';
+buff[size] =(t% 10)+'0';
 t =t/10;
 size--;
 }
-buffer[len] ='\0';
-	write(1,"Your ",5);
-	write(1,buffer,len);
-	write(1," second timer has finished!",27);
+buff[len] ='\0';
 }
-void sigChild_handler(int sig, siginfo_t *help, void *no){
-	write(1,"Child with PID ",strlen(" Child with PID"));
-	printf("%d",(help -> si_pid));
-	fflush(stdout);
-	write(1," has died. It spent ",strlen(" has died. It spent "));
-	write(1," milliseconds",strlen(" milliseconds"));
-	printf("%zu",help->si_utime);
-	fflush(stdout);
-	write(1,"\n",1);
+else{
+	buff[0] ='0';
+	buff[1] ='\0';
 }
-void SIGUSR2_handler(int f){
-	write(1,"Well that was easy.",strlen("Well that was easy."));
-	write(1,"\n",1);
 }
-

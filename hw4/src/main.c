@@ -16,6 +16,8 @@ int main(int argc, char const *argv[], char* envp[]){
     //child
     struct sigaction child_act;
     child_act.sa_sigaction = sigChild_handler;
+    child_act.sa_flags= SA_SIGINFO;
+    sigemptyset(&child_act.sa_mask);
     sigaction(SIGCHLD, &child_act,NULL);
     signal(SIGUSR2,SIGUSR2_handler);
     //prompt
@@ -26,21 +28,44 @@ int main(int argc, char const *argv[], char* envp[]){
         if(arg_c>0){
         char **arg_v =   parse_command(cmd,arg_c);
        if(strcmp(arg_v[0],"help")==0){ //help
+        if(arg_c==1)
         print_help(arg_c,arg_v);
+        else{
+             write(2,"invalid arg",strlen("invalid arg"));
+             write(2,"\n",1);
+        }
        }
        else if(strcmp(arg_v[0],"exit")==0){
-                    for(int i=0;i<=arg_c;i++){
+            if(arg_c==1){
+                    for(int i=0;i<=arg_c;i++)
                               free(arg_v[i]);
-                                 }
                           free(arg_v);
                       free(cmd);
                       free(prompt);
                       exit(EXIT_SUCCESS);
+                  }
+            else{
+                 write(2,"invalid arg",strlen("invalid arg"));
+                 write(2,"\n",1);
+            }
            }
        else if(strcmp(arg_v[0],"cd")==0){
-          free(prompt);
+         if(arg_c<=2){
           char* new_cd= cd_sfish(arg_c,arg_v);
-          prompt=modif_prompt(new_cd);
+          if(new_cd!=NULL){
+            free(prompt);
+             prompt=modif_prompt(new_cd);
+          if(arg_c!=1){
+            if(strcmp(arg_v[1],"-")!=0&&arg_v[1]!=NULL)
+                  free(new_cd);
+            }
+         }
+
+         }
+         else{
+                 write(2,"invalid arg",strlen("invalid arg"));
+                 write(2,"\n",1);
+            }
        }
        else if(strcmp(arg_v[0],"alarm")==0){
         if(arg_c==2){

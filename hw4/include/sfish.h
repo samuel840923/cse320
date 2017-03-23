@@ -14,6 +14,7 @@
 #include <signal.h>
 
 int flag ;
+char* reprint;
 char** parse_command(char* s,int size);
 int getArgc(char* s);
 int execute_process(int arg_c, char** arg_v,char *tobefree,char *free2,char** envp);
@@ -43,4 +44,5 @@ int conversion_string(char*s);
 void sigarm_handler(int length);
 void sigChild_handler(int sig, siginfo_t *help, void *no);
 void SIGUSR2_handler(int f);
+void parse_int(long int a, char buff[]);
 #endif
