@@ -94,19 +94,34 @@ void print_help(int arg_c, char** arg_v){
 		return homepath;
 	}
 	 if(strcmp(arg_v[1],"-")==0) {
+	 	int size = 256;
+		char *current=malloc(size);
+		while(getcwd(current,size)==NULL){
+		size=size*2;
+		current = realloc(current,size);
+		}
 		char* oldpath = getenv("OLDPATH");
 		if(oldpath==NULL){
 		write(2,"no old path",strlen("no old path"));
 		write(2,"\n",1);
+		free(current);
 		return NULL;
 		}
 		int status = chdir(oldpath);
 		if(status==-1){
 			write(2,"cannot change the path",strlen("cannot change the path"));
 			write(2,"\n",1);
+			free(current);
 			return NULL;
 		}
-
+		status = setenv("OLDPATH",current,1);
+		if(status==-1){
+			write(2,"cannot set the path",strlen("cannot set the path"));
+			write(2,"\n",1);
+			free(current);
+			return NULL;
+		}
+		free (current);
 		return oldpath;
 	}
 	if(strcmp(arg_v[1],".")==0){
@@ -167,16 +182,17 @@ void print_help(int arg_c, char** arg_v){
 		size=size*2;
 		current = realloc(current,size);
 		}
-		int status = setenv("OLDPATH",current,1);
+
+		int status = chdir(arg_v[1]);
 		if(status==-1){
-			write(2,"cannot set the path",strlen("cannot set the path"));
+			write(2,"cannot change directory",strlen("cannot change directory"));
 			write(2,"\n",1);
 			free(current);
 			return NULL;
 		}
-		status = chdir(arg_v[1]);
+		 status = setenv("OLDPATH",current,1);
 		if(status==-1){
-			write(2,"cannot change directory",strlen("cannot change directory"));
+			write(2,"cannot set the path",strlen("cannot set the path"));
 			write(2,"\n",1);
 			free(current);
 			return NULL;
@@ -378,14 +394,12 @@ int redirection_check(int arg_c,char** arg_v){
 for(int i=0;i<arg_c;i++){
 	if(strcmp(arg_v[i],">")==0)
 		return 1;
-	if(strcmp(arg_v[i],"1>")==0){
+	if(strcmp(arg_v[i],"1>")==0)
 		return 2;
-	}
-	if(strcmp(arg_v[i],"2>")==0){
+	if(strcmp(arg_v[i],"2>")==0)
 		return 2;
-	}if(strcmp(arg_v[i],"&>")==0){
+	if(strcmp(arg_v[i],"&>")==0)
 		return 2;
-	}
 	if(strcmp(arg_v[i],">>")==0)
 		return 2;
 	if(strcmp(arg_v[i],"<<")==0)
@@ -625,19 +639,40 @@ int redirection_exec(int arg_c,char** arg_v,char *tobefree,char *free2,char** en
 			free(path);
     		return -1;
 			}
+
 		if((pid = fork())==0){
-		//char* keyname = arg_v[index+1];
-		int pd [2];
-		int pi_cd = pipe(pd);
-		if(dup2(pd[1],0)==-1||pi_cd==-1){
-			write(2,"somthing is wrong",strlen("somthing is wrong"));
-    		write(2,"\n",1);
-			freeAll(free2,tobefree,index,real_arg_v,arg_c,arg_v,free_yes,path);
-			exit(-1);
+		int pd[2];
+		pipe(pd);
+		char* target = arg_v[index+1];
+		char* targ = malloc(strlen(target)+1);
+		strcpy(targ,target);
+		strcat(targ,"\n");
+		int size = 50;
+		char *test = malloc(size);
+		write(1,">",1);
+		while(fgets(test,size,stdin)==NULL){
+			size=size*2;
+			test = realloc(test,size);
 		}
-		//char *get =NULL;
+		while(strcmp(targ,test)!=0){
+			write(1,">",1);
+			if(test!=NULL)
+			write(pd[1],test,strlen(test));
+			else{
+				size=size*2;
+				test = realloc(test,size);
+			}
+			fgets(test,size,stdin);
+		}
+		free(targ);
+		free(test);
+		dup2(pd[0],0);
+		close(pd[1]);
+
 		if(strcmp(arg_v[0],"pwd")==0){
 			pwd_sfish(arg_c,arg_v);
+			close(pd[1]);
+			close(pd[0]);
 			freeAll(free2,tobefree,index,real_arg_v,arg_c,arg_v,free_yes,path);
 			exit(0);
 		}
@@ -652,6 +687,7 @@ int redirection_exec(int arg_c,char** arg_v,char *tobefree,char *free2,char** en
 		   }
 		}
 		else{
+
 			wait(&st);
 			for(int i=0;i<index;i++)
 			free(real_arg_v[i]);
@@ -660,6 +696,8 @@ int redirection_exec(int arg_c,char** arg_v,char *tobefree,char *free2,char** en
 			free(path);
 		}
     }
+
+
 
  return 0;
 }
@@ -947,19 +985,29 @@ int fork_third(char** arg_v,int pd[],char** envp){
 int checkValid(int arg_c,char** arg_v){
 int output_d =0;
 int input_d =0;
+int append =0;
+int one_out=0;
+int two_out=0;
+int both_out=0;
 for(int i=0;i<arg_c;i++){
-	if(strcmp(arg_v[i],">")==0){
+	if(strcmp(arg_v[i],">")==0)
 		output_d++;
-	}
-	if(strcmp(arg_v[i],"<")==0){
+	if(strcmp(arg_v[i],"<")==0)
 		input_d++;
-
-	}
-	if(strcmp(arg_v[i],"|")==0){
+	if(strcmp(arg_v[i],">>")==0)
+		append++;
+	if(strcmp(arg_v[i],"1>")==0)
+		one_out++;
+	if(strcmp(arg_v[i],"2>")==0)
+		two_out++;
+	if(strcmp(arg_v[i],"&>")==0)
+		both_out++;
+	if(strcmp(arg_v[i],"|")==0)
 		return -1;
-	}
+
 }
-if(output_d>1)
+int sum = output_d+both_out+two_out+one_out+append+input_d;
+if(sum>1)
 	return -1;
 if(input_d>1)
 	return -1;
@@ -991,6 +1039,23 @@ int checkValid_pipe(int arg_c,char** arg_v){
 		return -1;
 
 	}
+	if(strcmp(arg_v[i],"1>")==0){
+		return -1;
+
+	}
+	if(strcmp(arg_v[i],"2>")==0){
+		return -1;
+
+	}
+	if(strcmp(arg_v[i],"&>")==0){
+		return -1;
+
+	}
+	if(strcmp(arg_v[i],">>")==0){
+		return -1;
+
+	}
+
 	if(strcmp(arg_v[i],"|")==0){
 		pipe++;
 
@@ -1025,14 +1090,16 @@ write(1,"\n",1);
 	write(1,reprint,strlen(reprint));
 }
 void sigChild_handler(int sig, siginfo_t *help, void *no){
+
 	write(1,"Child with PID ",strlen(" Child with PID"));
 	pid_t pid = help->si_pid;
 	char buffer[12];
 	parse_int(pid,buffer);
 	write(1,buffer,strlen(buffer));
 	write(1," has died. It spent ",strlen(" has died. It spent "));
-	clock_t total_time = (help->si_utime)+(help->si_stime);
-	total_time = total_time/CLOCKS_PER_SEC;
+	float total_time = (help->si_utime)+(help->si_stime);
+	total_time = total_time * 1000;
+	total_time = (total_time/(float)CLOCKS_PER_SEC);
 	char buffer_time[12];
 	parse_int(total_time,buffer_time);
 	write(1,buffer_time,strlen(buffer_time));
