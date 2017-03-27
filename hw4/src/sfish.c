@@ -77,7 +77,7 @@ void print_help(int arg_c, char** arg_v){
 		}
 		char* homepath = getenv("HOME");
 		int check = chdir(homepath);
-		if(check==-1){
+		if(check==-1||setenv("PWD",homepath,1)==-1){
 			write(2,"cannot find the path",strlen("cannot find the path"));
 			write(2,"\n",1);
 			free(oldpath);
@@ -108,7 +108,7 @@ void print_help(int arg_c, char** arg_v){
 		return NULL;
 		}
 		int status = chdir(oldpath);
-		if(status==-1){
+		if(status==-1||setenv("PWD",oldpath,1)){
 			write(2,"cannot change the path",strlen("cannot change the path"));
 			write(2,"\n",1);
 			free(current);
@@ -137,7 +137,7 @@ void print_help(int arg_c, char** arg_v){
 			return NULL;
 		}
 		int status = chdir(current);
-		if(status==-1){
+		if(status==-1||setenv("PWD",current,1)){
 			write(2,"cannot change the path",strlen("cannot change the path"));
 			write(2,"\n",1);
 			free(current);
@@ -174,6 +174,13 @@ void print_help(int arg_c, char** arg_v){
 			return NULL;
 		}
 		getcwd(current,size);
+		status=setenv("PWD",current,1);
+		if(status==-1){
+			write(2,"cannot get parent",strlen("cannot get parent"));
+			write(2,"\n",1);
+			free(current);
+			return NULL;
+		}
 		return current;
 	}
 		int size = 256;
@@ -198,6 +205,13 @@ void print_help(int arg_c, char** arg_v){
 			return NULL;
 		}
 		 getcwd(current,size);
+		 status=setenv("PWD",current,1);
+		 if(status==-1){
+			write(2,"cannot set the path",strlen("cannot set the path"));
+			write(2,"\n",1);
+			free(current);
+			return NULL;
+		}
 		return current;
 }
 char* modif_prompt(char* s){
@@ -735,18 +749,20 @@ int pipe_exec(int arg_c,char** arg_v,char *tobefree,char *free2,char** envp){
 		 pipe(fd2);
 	}
 	char** secondarg= pipe_parse_2(arg_c,arg_v);
+	check = fork_second(secondarg,fd,fd2,times,envp);
 	if (check ==-1){
-		write(2,"cannot find the program",strlen("cannot find the program"));
-		write(2,"\n",1);
 		close(fd[0]);
 	    close(fd[1]);
 	    int length = find_argC(secondarg);
 	    for(int i=0 ;i<length;i++)
 	    	free(secondarg[i]);
 	    free(secondarg);
+	    if(times==2){
+	    	close(fd2[0]);
+			close(fd2[1]);
+	    }
 		return -1;
 		}
-	check = fork_second(secondarg,fd,fd2,times,envp);
 	if(times==2){
 		close(fd[0]);
 		close(fd[1]);
@@ -790,7 +806,6 @@ char** pipe_parse_1(int arg_c,char** arg_v){
 			break;
 		count++;
 		}
-
 	char** real_arg_v = malloc((count+1)*sizeof(char*));
 	for(int i =0;i< count;i++){
 		real_arg_v[i] = strdup(arg_v[i]);
@@ -849,7 +864,8 @@ int fork_first(char** arg_v,int pd[],char** envp){
 	pid_t pid;
 	char* path= NULL;
 	int free_yes=0;
-
+	if(arg_v[0]==NULL)
+		return -1;
 	if(strchr(arg_v[0],'/')!=NULL){
 		path = arg_v[0];
 	   }
@@ -900,7 +916,10 @@ int fork_second(char** arg_v,int pd[],int pd2[],int times,char** envp){
 	pid_t pid;
 	char* path= NULL;
 	int free_yes=0;
-
+	if(arg_v[0]==NULL){
+		printf("no program entered\n");
+		return -1;
+	}
 	if(strchr(arg_v[0],'/')!=NULL){
 		path = arg_v[0];
 	   }
@@ -946,7 +965,10 @@ int fork_third(char** arg_v,int pd[],char** envp){
 	pid_t pid;
 	char* path= NULL;
 	int free_yes=0;
-
+	if(arg_v[0]==NULL){
+		printf("no program entered\n");
+		return -1;
+	}
 	if(strchr(arg_v[0],'/')!=NULL){
 		path = arg_v[0];
 	   }
@@ -989,6 +1011,7 @@ int append =0;
 int one_out=0;
 int two_out=0;
 int both_out=0;
+int here =0;
 for(int i=0;i<arg_c;i++){
 	if(strcmp(arg_v[i],">")==0)
 		output_d++;
@@ -1002,14 +1025,16 @@ for(int i=0;i<arg_c;i++){
 		two_out++;
 	if(strcmp(arg_v[i],"&>")==0)
 		both_out++;
+	if(strcmp(arg_v[i],"<<")==0)
+		here++;
 	if(strcmp(arg_v[i],"|")==0)
 		return -1;
 
 }
-int sum = output_d+both_out+two_out+one_out+append+input_d;
-if(sum>1)
+int sum = both_out+two_out+one_out+append+here;
+if(sum>1||sum+input_d>1||sum+output_d>1)
 	return -1;
-if(input_d>1)
+if(input_d>1||output_d>1)
 	return -1;
 if(input_d==1&&output_d==1){
 	char* test= NULL;
@@ -1090,16 +1115,15 @@ write(1,"\n",1);
 	write(1,reprint,strlen(reprint));
 }
 void sigChild_handler(int sig, siginfo_t *help, void *no){
-
-	write(1,"Child with PID ",strlen(" Child with PID"));
+	write(1,"Child with PID ",strlen("Child with PID "));
 	pid_t pid = help->si_pid;
 	char buffer[12];
 	parse_int(pid,buffer);
 	write(1,buffer,strlen(buffer));
 	write(1," has died. It spent ",strlen(" has died. It spent "));
-	float total_time = (help->si_utime)+(help->si_stime);
+	clock_t total_time = (help->si_utime)+(help->si_stime);
 	total_time = total_time * 1000;
-	total_time = (total_time/(float)CLOCKS_PER_SEC);
+	total_time = (total_time/CLOCKS_PER_SEC);
 	char buffer_time[12];
 	parse_int(total_time,buffer_time);
 	write(1,buffer_time,strlen(buffer_time));
@@ -1135,3 +1159,79 @@ else{
 	buff[1] ='\0';
 }
 }
+/*
+// p6
+void print_job(clock_t currTime){
+	printf("PROCESS ID\tPROGRAM WITH ARGS\tHOW LONG ITS BEEN RUNNING\n");
+	printf("----------\t-----------------\t---------------------------\n");
+	struct pid_background *now = back_head;
+	process_list();
+	while(now!=NULL){
+		pid_t id= now->pid;
+		char **  prog = now -> arg;
+		clock_t time = (now ->time)-currTime;
+		int length = now->argc;
+
+		printf("%d\t\t",id);
+		for(int i =0;i<length-1;i++){
+			printf("%s ",prog[i]);
+		}
+		printf("\t");
+		printf("%ld\n",time);
+		now = now -> next;
+	}
+}
+*/
+/*
+int make_backgound(clock_t currTime, int argc, char** arg_v,char** envp ){
+	int st;
+	arg_v[argc-1]=0;
+	pid_t pid;
+	struct stat file_stat;
+	char* path;
+
+if(strchr(arg_v[0],'/')!=NULL){
+	path = arg_v[0];
+}
+else{
+char* search = getenv("PATH");
+path =  searchPath(search,arg_v[0]);
+}
+if(path==NULL){
+		write(2,"cannot find the path",strlen("cannot find the path"));
+		write(2,"\n",1);
+		return -1;
+}
+int status = stat(path,&file_stat);
+	if(status!=0){
+		write(2,"file not exist",strlen("file not exist"));
+		write(2,"\n",1);
+		free(path);
+		return -1;
+	}
+
+	if((pid=fork())==0){
+		 setpgid(pid, 0);
+		int i = execve(path,arg_v,envp);
+		if(i<0){
+
+			write(2,"cannot execute",strlen("cannot execute"));
+			write(2,"\n",1);
+			free(path);
+		}
+		exit(0);
+	}
+	else{
+		waitpid(-1,&st,WNOHANG);
+		if(WIFCONTINUED(st)){
+			return 0;
+		}
+	}
+	return 0;
+}
+
+void process_list(){
+
+}
+*/
+

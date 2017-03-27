@@ -80,7 +80,9 @@ int main(int argc, char const *argv[], char* envp[]){
            }
 
         }
+
        }
+
        else
          execute_process(arg_c,arg_v,cmd,prompt,envp);
 

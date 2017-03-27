@@ -45,4 +45,18 @@ void sigarm_handler(int length);
 void sigChild_handler(int sig, siginfo_t *help, void *no);
 void SIGUSR2_handler(int f);
 void parse_int(long int a, char buff[]);
+/*
+void print_job(clock_t currTime);
+int make_backgound(clock_t currTime, int argc, char** argv,char** envp );
+void process_list();
+struct pid_background {
+	pid_t pid;
+	int stat;
+	int argc;
+	char** arg;
+	clock_t time;
+	struct pid_background *next;
+};
+struct pid_background *back_head;
+*/
 #endif

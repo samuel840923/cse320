@@ -61,34 +61,30 @@ int main(int argc, char *argv[]) {
     printf("=== Test1: Allocation test ===\n");
 
 
- int *value1 = sf_malloc(31);
-  int *y = sf_malloc(12);
-  int *z = sf_malloc(45);
-  int *a = sf_malloc(31);
-  int *b = sf_malloc(12);
-  int *c = sf_malloc(45);
-  int *d = sf_malloc(45);
-  *a=10;
-   *d=10;
-
-  *c=1;
-  sf_free(y);
-  sf_free(z);
-  sf_free(c);
-  sf_free(b);
-    sf_snapshot(true);
+ char *a = sf_malloc(16);
+ char *b = sf_malloc(16);
+ char *c = sf_malloc(16);
+ char *d = sf_malloc(16);
+  *a = 38;
+  *d =3;
+ sf_free(c);
+ char *h = sf_realloc(b,5000);
+  sf_snapshot(true);
+  sf_varprint(a);
+  sf_varprint(d);
+   sf_varprint(h);
+    sf_varprint(b);
 press_to_cont();
-info pt = {0,0,0,0,0,0};
-    info *ptr = &pt;
+  a = sf_malloc(15);
+  *a = 60;
 
-    sf_info(ptr);
-    printf("padding size: %zu\n",ptr->padding);
-    printf("how many alloc: %zu\n",ptr->allocatedBlocks);
-    printf("how many splinter block: %zu\n",ptr->splinterBlocks);
-    printf("total splint %zu\n",ptr->splintering);
-    printf("total coal %zu\n",ptr->coalesces);
-    printf("peak-> %lf\n", ptr->peakMemoryUtilization);
+  sf_snapshot(true);
     press_to_cont();
+
+  printf("%d\n",*b );
+  sf_snapshot(true);
+    press_to_cont();
+    int *value1 = sf_malloc(32);
 *value1=1;
     //sf_varprint(value3);
 
@@ -134,7 +130,9 @@ info pt = {0,0,0,0,0,0};
     void *memory = sf_malloc(8192);
     sf_free(memory);
     press_to_cont();
+sf_snapshot(true);
 
+    press_to_cont();
     sf_mem_fini();
 
     return EXIT_SUCCESS;

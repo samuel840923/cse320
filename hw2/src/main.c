@@ -42,7 +42,7 @@ int main(int argc, char *argv[]){
 
  char flag ='\0';
     int A =-1;
-    int onlyA =1;
+    int onlyA =2;
     opterr =0;
     while((flag=getopt(argc,argv,"Ah012345i:o:d:"))!=-1){
         switch(flag){
