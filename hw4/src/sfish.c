@@ -940,8 +940,17 @@ int fork_second(char** arg_v,int pd[],int pd2[],int times,char** envp){
 			dup2(pd2[1],1);
 			close(pd2[0]);
 			}
-
 			close(pd[1]);
+			if(strcmp(arg_v[0],"pwd")==0){
+				pwd_sfish(find_argC(arg_v),arg_v);
+				if(free_yes==1)
+					free(path);
+			int length = find_argC(arg_v);
+	  		for(int i=0 ;i<length;i++)
+	    		free(arg_v[i]);
+	   		free(arg_v);
+			exit(0);
+			}
 			if(execve(path,arg_v,envp)==-1){
 				write(2,"cannot execute",strlen("cannot execute"));
 				write(2,"\n",1);
@@ -986,6 +995,16 @@ int fork_third(char** arg_v,int pd[],char** envp){
 		if((pid=fork())==0){
 			dup2(pd[0],0);
 			close(pd[1]);
+			if(strcmp(arg_v[0],"pwd")==0){
+				pwd_sfish(find_argC(arg_v),arg_v);
+				if(free_yes==1)
+					free(path);
+			int length = find_argC(arg_v);
+	  		for(int i=0 ;i<length;i++)
+	    		free(arg_v[i]);
+	   		free(arg_v);
+			exit(0);
+			}
 			if(execve(path,arg_v,envp)==-1){
 				write(2,"cannot execute",strlen("cannot execute"));
 				write(2,"\n",1);
