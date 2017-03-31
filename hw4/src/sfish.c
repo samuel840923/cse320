@@ -283,14 +283,14 @@ int chk = redirection_check(arg_c,arg_v);
 	}
 		pid_t pid;
 if(strcmp(arg_v[0],"pwd")==0){
+	if(arg_c!=1){
+		 write(2,"invalid arg",strlen("invalid arg"));
+          write(2,"\n",1);
+          return -1;
+	}
 	int st;
 	if((pid=fork())==0){
-	if(arg_c==1)
 	pwd_sfish(arg_c,arg_v);
-	else{
-		  write(2,"invalid arg",strlen("invalid arg"));
-          write(2,"\n",1);
-	}
 	for(int i=0;i<arg_c;i++)
 		free(arg_v[i]);
 	free(arg_v);
