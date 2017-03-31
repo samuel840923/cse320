@@ -1142,7 +1142,7 @@ void sigChild_handler(int sig, siginfo_t *help, void *no){
 	write(1," has died. It spent ",strlen(" has died. It spent "));
 	clock_t total_time = (help->si_utime)+(help->si_stime);
 	total_time = total_time * 1000;
-	total_time = (total_time/CLOCKS_PER_SEC);
+	total_time = (total_time/sysconf(_SC_CLK_TCK));
 	char buffer_time[12];
 	parse_int(total_time,buffer_time);
 	write(1,buffer_time,strlen(buffer_time));
