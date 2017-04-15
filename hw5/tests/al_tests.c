@@ -96,13 +96,43 @@ Test(al_suite, 4_mytest, .timeout=2){
     insert_al(locallist,b);
      a = 9;
     insert_al(locallist,b);
+    int g = 1;
+    int *k = &g;
+     printf("-%zu\n",locallist->capacity);
+    remove_data_al(locallist,k);
+    int leng = locallist->length;
+    for(int i=0;i<leng;i++){
+        int *c = get_index_al(locallist,i);
+       printf("---%d\n",*c);
+    }
+}
+Test(al_suite, 5_mytest, .timeout=2){
+    arraylist_t *locallist = new_al(sizeof(int));
+    cr_assert_not_null(locallist, "List returned was NULL");
+    int a = 1;
+    int *b = &a;
+    insert_al(locallist,b);
+    a = 2;
+    insert_al(locallist,b);
+    a = 3;
+    insert_al(locallist,b);
+    a = 4;
+    insert_al(locallist,b);
+    a = 5;
+    insert_al(locallist,b);
+    a = 6;
+    insert_al(locallist,b);
+    a = 7;
+    insert_al(locallist,b);
+    a = 8;
+    insert_al(locallist,b);
+     a = 9;
+    insert_al(locallist,b);
 
     int leng = locallist->length;
     for(int i=0;i<leng;i++){
         int *c = get_index_al(locallist,i);
         cr_assert(*c==i+1,"not equal");
     }
-
-
 }
 

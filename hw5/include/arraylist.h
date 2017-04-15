@@ -6,7 +6,8 @@
 #include <stdbool.h>
 #include <stdlib.h>
 #include <limits.h>
-#include <errno.h>
+#include <pthread.h>
+#include <semaphore.h>
 #include "const.h"
 
 /*

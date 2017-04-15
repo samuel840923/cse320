@@ -5,6 +5,7 @@
  * @visibility HIDDEN FROM USER
  * @return     true on success, false on failure
  */
+sem_t mutex;
 static bool resize_al(arraylist_t* self){
     bool ret = false;
     size_t curr_cap = self->capacity;
@@ -136,7 +137,7 @@ void *remove_index_al(arraylist_t *self, size_t index){
             memcpy(removed,(char*)base+move,elem_size);
             return removed;
     }
-      void* base = self->base;
+            void* base = self->base;
             void *removed = malloc(elem_size);
             size_t cap = self->capacity;
             size_t move = elem_size*(index);
@@ -144,15 +145,23 @@ void *remove_index_al(arraylist_t *self, size_t index){
             shiftleft(self,index);
             self->length--;
              if(self->length == (cap/2) - 1)
-                resize_al(self);
+                  resize_al(self);
             return removed;
 }
 
 void delete_al(arraylist_t *self, void (*free_item_func)(void*)){
-free(self);
+
 if(free_item_func==NULL)
     return;
-free_item_func(self->base);
+size_t leng = self->length;
+void *base = self->base;
+size_t elem_size = self->item_size;
+for(int i=0;i<leng;i++){
+size_t move = elem_size*i;
+void *freebase = (char*)base+move;
+free_item_func(freebase);
+}
+free(self->base);
 }
 int getindex(arraylist_t *self, void *data){
     int length = self->length;
