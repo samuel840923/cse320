@@ -24,7 +24,7 @@ static bool resize_al(arraylist_t* self){
          memset(curr_base,0,tobeclear);
          ret = true;
     }
-    else if(curr_length == (curr_cap/2) - 1){
+    else if((curr_length == (curr_cap/2) - 1)&&((curr_cap/2)>=INIT_SZ)){
         self->base = realloc(curr_base,curr_cap*item_size/2);
         curr_cap = curr_cap/2;
         self->capacity = curr_cap;
@@ -56,13 +56,14 @@ size_t insert_al(arraylist_t *self, void* data){
 return curr_length;
 }
 
-void *get_data_al(arraylist_t *self, void *data){
+
+size_t get_data_al(arraylist_t *self, void *data){
     if(data == NULL){
-        return NULL;
+        return UINT_MAX ;
     }
     int index = getindex(self,data);
     if(index==-1){
-        return NULL;
+        return UINT_MAX ;
     }
     void *baseArray = self -> base;
     size_t elem_size = self->item_size;
@@ -71,8 +72,11 @@ void *get_data_al(arraylist_t *self, void *data){
     baseArray = (char*)baseArray+move;
     memcpy(orig_data,baseArray,elem_size);
 
-    return orig_data;
+    return index;
+
+
 }
+
 void *get_index_al(arraylist_t *self, size_t index){
     size_t length = self->length;
     if(length<=index) {
@@ -87,7 +91,8 @@ void *get_index_al(arraylist_t *self, size_t index){
     return orig_data;
 }
 
-void *remove_data_al(arraylist_t *self, void *data){
+
+bool remove_data_al(arraylist_t *self, void *data){
     if(self==NULL){
          return NULL;
     }
@@ -121,12 +126,15 @@ void *remove_data_al(arraylist_t *self, void *data){
     if(self->length == (cap/2) - 1)
         resize_al(self);
     return removed;
-
-
 }
+
 void *remove_index_al(arraylist_t *self, size_t index){
     size_t len = self->length;
+    size_t cap = self->capacity;
     if(len==0){
+        return NULL;
+    }
+    if(cap==0){
         return NULL;
     }
     size_t elem_size = self->item_size;
@@ -135,11 +143,14 @@ void *remove_index_al(arraylist_t *self, size_t index){
             void *removed = malloc(elem_size);
             size_t move = elem_size*(len-1);
             memcpy(removed,(char*)base+move,elem_size);
+            shiftleft(self,index);
+            self->length--;
+             if(self->length == (cap/2) - 1)
+                  resize_al(self);
             return removed;
     }
             void* base = self->base;
             void *removed = malloc(elem_size);
-            size_t cap = self->capacity;
             size_t move = elem_size*(index);
             memcpy(removed,(char*)base+move,elem_size);
             shiftleft(self,index);
