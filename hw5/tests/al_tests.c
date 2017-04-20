@@ -35,6 +35,13 @@ void test_item_t_free_func(void *argptr){
     else
         cr_log_warn("%s\n", "Pointer was NULL");
 }
+void student_t_free_func(void *argptr){
+    student_t* ptr = (student_t*) argptr;
+    if(ptr != NULL)
+        free(ptr->name);
+    else
+        cr_log_warn("%s\n", "Pointer was NULL");
+}
 
 void setup(void) {
     cr_log_warn("Setting up test");
@@ -56,83 +63,92 @@ Test(al_suite, 0_creation, .timeout=2){
 }
 
 Test(al_suite, 1_deletion, .timeout=2){
-    arraylist_t *locallist = new_al(sizeof(test_item_t));
-
-    cr_assert_not_null(locallist, "List returned was NULL");
-
-    delete_al(locallist, test_item_t_free_func);
-
-    cr_assert(true, "Delete completed without crashing");
+   arraylist_t *self = new_al(sizeof(int));
+     int a =0;
+     int*b =&a;
+     insert_al(self,b);
+     a = 8;
+     insert_al(self,b);
+     a = 9;
+     insert_al(self,b);
+     a = 10;
+     insert_al(self,b);
+     a = 11;
+     insert_al(self,b);
+     a = 12;
+     insert_al(self,b);
+     int no = 1;
+     int* te = &no;
+     bool check = remove_data_al(self,te);
+     cr_assert(check==false, "cannot find");
+     cr_assert(self->length==6, "cannot find");
+     no = 8;
+      check = remove_data_al(self,te);
+      cr_assert(check==true, "cannot find");
+     cr_assert(self->length==5, "cannot find");
+      int* test =  get_index_al(self,1);
+       cr_assert(*test==9, "should be 9");
+       cr_assert(self->capacity==8, "should be 8");
+       test = remove_index_al(self,1);
+       cr_assert(*test==9, "should be 9");
+       cr_assert(self->capacity==8, "should be 8");
+         test = remove_index_al(self,1);
+         cr_assert(*test==10, "should be 9");
+       cr_assert(self->capacity==4, "should be 4");
+       test = remove_index_al(self,0);
+       test = remove_index_al(self,0);
+       cr_assert(self->capacity==4, "should be 4");
+       cr_assert(self->length==1, "cannot find 2");
+       test = remove_index_al(self,0);
+         cr_assert(self->capacity==4, "should be 4");
+         test = remove_index_al(self,0);
+         cr_assert(test==NULL, "should be no more");
 }
 
 Test(al_suite, 2_insertion, .timeout=2, .init=setup, .fini=teardown){
-    cr_assert(true, "I win");
+     arraylist_t *self = new_al(sizeof(int));
+     int a =0;
+     int*b =&a;
+     insert_al(self,b);
+     a = 10;
+     insert_al(self,b);
+     insert_al(self,b);
+     insert_al(self,b);
+     insert_al(self,b);
+     insert_al(self,b);
+    size_t leng = self->length;
+   int* te =  get_index_al(self,1);
+    cr_assert(leng==6, "not equal to 6");
+    cr_assert(*te==10, "should be 10");
+    cr_assert(self->capacity==8, "should be 8");
+    insert_al(self,b);
+    int index = insert_al(self,b);
+    cr_assert(self->capacity==8, "should be 8");
+    cr_assert(index==7, "should be 7");
+    cr_assert(self->length==8, "should be 8");
+    insert_al(self,b);
+    cr_assert(self->capacity==16, "should be 8");
+    cr_assert(self->length==9, "should be 8");
+     int in =  get_data_al(self,b);
+     cr_assert(in==1, "should be 1");
 }
 
 Test(al_suite, 3_removal, .timeout=2, .init=setup, .fini=teardown){
-  new_al(sizeof(int));
 
+arraylist_t *test = new_al(sizeof(student_t));
+char* name1 = malloc(8);
+char* name2 = malloc(8);
+char* name3 = malloc(8);
+memcpy(name1,"sam",4);
+memcpy(name2,"amy",4);
+memcpy(name3,"tom",4);
+student_t inser = {name1,123,3.0};
+student_t inser2 = {name2,123,4.0};
+student_t inser3 = {name3,123,2.0};
+insert_al(test,&inser);
+insert_al(test,&inser2);
+insert_al(test,&inser3);
+delete_al(test,student_t_free_func);
 
-}
-Test(al_suite, 4_mytest, .timeout=2){
-    arraylist_t *locallist = new_al(sizeof(int));
-    cr_assert_not_null(locallist, "List returned was NULL");
-    int a = 1;
-    int *b = &a;
-    insert_al(locallist,b);
-    a = 2;
-    insert_al(locallist,b);
-    a = 3;
-    insert_al(locallist,b);
-    a = 4;
-    insert_al(locallist,b);
-    a = 5;
-    insert_al(locallist,b);
-    a = 6;
-    insert_al(locallist,b);
-    a = 7;
-    insert_al(locallist,b);
-    a = 8;
-    insert_al(locallist,b);
-     a = 9;
-    insert_al(locallist,b);
-    int g = 1;
-    int *k = &g;
-     printf("-%zu\n",locallist->capacity);
-    remove_data_al(locallist,k);
-    int leng = locallist->length;
-    for(int i=0;i<leng;i++){
-        int *c = get_index_al(locallist,i);
-       printf("---%d\n",*c);
-    }
-}
-Test(al_suite, 5_mytest, .timeout=2){
-    arraylist_t *locallist = new_al(sizeof(int));
-    cr_assert_not_null(locallist, "List returned was NULL");
-    int a = 1;
-    int *b = &a;
-    insert_al(locallist,b);
-    a = 2;
-    insert_al(locallist,b);
-    a = 3;
-    insert_al(locallist,b);
-    a = 4;
-    insert_al(locallist,b);
-    a = 5;
-    insert_al(locallist,b);
-    a = 6;
-    insert_al(locallist,b);
-    a = 7;
-    insert_al(locallist,b);
-    a = 8;
-    insert_al(locallist,b);
-     a = 9;
-    insert_al(locallist,b);
-
-    int leng = locallist->length;
-    for(int i=0;i<leng;i++){
-        int *c = get_index_al(locallist,i);
-        cr_assert(*c==i+1,"not equal");
-    }
 }
 

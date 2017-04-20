@@ -26,6 +26,10 @@ typedef struct{
     size_t item_size;
     void* base;
     /* END: .. add locks, other fields BELOW THIS COMMENT if needed .. */
+    pthread_mutex_t mutex;
+    pthread_mutex_t foreach_mutex;
+    pthread_mutex_t read_mutex;
+    int readcnt;
 
 }arraylist_t;
 
