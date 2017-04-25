@@ -29,7 +29,9 @@ typedef struct{
     pthread_mutex_t mutex;
     pthread_mutex_t foreach_mutex;
     pthread_mutex_t read_mutex;
+     pthread_mutex_t get_mutex;
     int readcnt;
+    int getcnt;
 
 }arraylist_t;
 

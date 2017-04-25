@@ -40,9 +40,12 @@ arraylist_t *new_al(size_t item_size){
     ret -> item_size = item_size;
     ret -> base = calloc(INIT_SZ,item_size);
     ret -> readcnt=0;
+    ret -> getcnt=0;
     pthread_mutex_init(&(ret->mutex), NULL);
     pthread_mutex_init(&(ret->foreach_mutex), NULL);
     pthread_mutex_init(&(ret->read_mutex), NULL);
+    pthread_mutex_init(&(ret->get_mutex), NULL);
+
 
     return ret;
 }
@@ -80,28 +83,43 @@ size_t get_data_al(arraylist_t *self, void *data){
         errno = EINVAL;
         return UINT_MAX ;
     }
-    pthread_mutex_lock(&(self->mutex));
+    pthread_mutex_lock(&(self->get_mutex));
     size_t cap = self->capacity;
     if(cap==0){
+        pthread_mutex_unlock(&(self->get_mutex));
          errno = EINVAL;
         return UINT_MAX ;
     }
-    if(data==NULL)
+    self->getcnt++;
+    if(self->getcnt==1)
+        pthread_mutex_lock(&(self->mutex));
+    pthread_mutex_unlock(&(self->get_mutex));
+
+    if(data==NULL){
+        pthread_mutex_lock(&(self->get_mutex));
+         self->getcnt--;
+         if(self->getcnt==0)
+            pthread_mutex_unlock(&(self->mutex));
+         pthread_mutex_unlock(&(self->get_mutex));
         return 0;
+    }
     int index = getindex(self,data);
     pthread_mutex_unlock(&(self->mutex));
     if(index==-1){
+        pthread_mutex_lock(&(self->get_mutex));
+         self->getcnt--;
+         if(self->getcnt==0)
+            pthread_mutex_unlock(&(self->mutex));
+         pthread_mutex_unlock(&(self->get_mutex));
         errno = EINVAL;
         return UINT_MAX ;
     }
-    /*
-    void *baseArray = self -> base;
-    size_t elem_size = self->item_size;
-    size_t move = elem_size*index;
-    void * orig_data = malloc(elem_size);
-    baseArray = (char*)baseArray+move;
-    memcpy(orig_data,baseArray,elem_size);
-    */
+    pthread_mutex_lock(&(self->get_mutex));
+         self->getcnt--;
+         if(self->getcnt==0)
+            pthread_mutex_unlock(&(self->mutex));
+        pthread_mutex_unlock(&(self->get_mutex));
+
     return index;
 
 
@@ -112,14 +130,22 @@ void *get_index_al(arraylist_t *self, size_t index){
         errno = EINVAL;
         return NULL;
     }
-    pthread_mutex_lock(&(self->mutex));
+    pthread_mutex_lock(&(self->get_mutex));
+    self->getcnt++;
+    if(self->getcnt==1)
+         pthread_mutex_lock(&(self->mutex));
+     pthread_mutex_unlock(&(self->get_mutex));
     size_t length = self->length;
     void *baseArray = self -> base;
      size_t elem_size = self->item_size;
      size_t cap = self->capacity;
     if(length==0||cap==0){
         errno = ENXIO;
-        pthread_mutex_unlock(&(self->mutex));
+         pthread_mutex_lock(&(self->get_mutex));
+             self->getcnt--;
+                if(self->getcnt==0)
+         pthread_mutex_unlock(&(self->mutex));
+     pthread_mutex_unlock(&(self->get_mutex));
         return NULL;
     }
     if(length<=index) {
@@ -127,7 +153,11 @@ void *get_index_al(arraylist_t *self, size_t index){
     baseArray = (char*)baseArray+move;
     void * orig_data = malloc(elem_size);
     memcpy(orig_data,baseArray,elem_size);
-    pthread_mutex_unlock(&(self->mutex));
+     pthread_mutex_lock(&(self->get_mutex));
+             self->getcnt--;
+                if(self->getcnt==0)
+         pthread_mutex_unlock(&(self->mutex));
+     pthread_mutex_unlock(&(self->get_mutex));
     return orig_data;
     }
 
@@ -135,7 +165,11 @@ void *get_index_al(arraylist_t *self, size_t index){
     baseArray = (char*)baseArray+move;
     void * orig_data = malloc(elem_size);
     memcpy(orig_data,baseArray,elem_size);
-    pthread_mutex_unlock(&(self->mutex));
+     pthread_mutex_lock(&(self->get_mutex));
+             self->getcnt--;
+                if(self->getcnt==0)
+         pthread_mutex_unlock(&(self->mutex));
+     pthread_mutex_unlock(&(self->get_mutex));
     return orig_data;
 }
 

@@ -99,12 +99,12 @@ bool foreach_break_f(){
     bool ret = true;
     storage_t *size =  pthread_getspecific(key);
     arraylist_t *array = size->check;
-    pthread_mutex_lock(&(array->mutex));
+    pthread_mutex_lock(&(array->read_mutex));
     array->readcnt--;
     if(size!=NULL&&array->readcnt==0){
      pthread_mutex_unlock(size->mutex);
     }
-     pthread_mutex_unlock(&(array->mutex));
+     pthread_mutex_unlock(&(array->read_mutex));
     return ret;
 }
 
