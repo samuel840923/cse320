@@ -57,9 +57,33 @@ void teardown(void) {
  *                  TESTS                 *
  ******************************************/
 Test(al_suite, 0_creation, .timeout=2){
-    arraylist_t *locallist = new_al(sizeof(test_item_t));
-
-    cr_assert_not_null(locallist, "List returned was NULL");
+    arraylist_t *self = new_al(sizeof(int));
+     int a =0;
+     int*b =&a;
+     insert_al(self,b);
+     a = 8;
+     insert_al(self,b);
+     a = 9;
+     insert_al(self,b);
+     a = 10;
+     insert_al(self,b);
+     a = 11;
+     insert_al(self,b);
+     a = 12;
+     insert_al(self,b);
+     int *test = get_index_al(self,4);
+     cr_assert(*test==11,"no good");
+   test = get_index_al(self,5);
+     cr_assert(*test==12,"no good");
+     test = get_index_al(self,3);
+     cr_assert(*test==10,"no good");
+     test = get_index_al(self,2);
+     cr_assert(*test==9,"no good");
+      test = get_index_al(self,1);
+     cr_assert(*test==8,"no good");
+     test = get_index_al(self,0);
+     cr_assert(*test==0,"no good");
+     cr_assert(self->capacity==8,"no good");
 }
 
 Test(al_suite, 1_deletion, .timeout=2){
@@ -151,4 +175,48 @@ insert_al(test,&inser3);
 delete_al(test,student_t_free_func);
 
 }
+Test(al_suite, 4_insertion, .timeout=2, .init=setup, .fini=teardown){
+      arraylist_t *self = new_al(sizeof(int));
+      int *save = NULL;
+     int a =0;
+     int*b =&a;
+     insert_al(self,b);
+     a = 8;
+     insert_al(self,b);
+     a = 9;
+     insert_al(self,b);
+     a = 10;
+     insert_al(self,b);
+     a = 11;
+     insert_al(self,b);
+     a = 12;
+     insert_al(self,b);
+     int no = 1;
+     save = & no;
+     bool where = remove_data_al(self,save);
+      cr_assert(where==false, "should be 1");
+      no =0;
+      where = remove_data_al(self,save);
+       cr_assert(where==true, "should be true");
+        int* check =  get_index_al(self,1);
+         cr_assert(*check==9, "should be 9");
+          size_t leng = self->length;
+           cr_assert(leng==5, "should be 5");
+           no = 9;
+            where = remove_data_al(self,save);
+             cr_assert(where==true, "should be true");
+             check =  get_index_al(self,2);
+              cr_assert(*check==11, "should be 11");
+               no = 12;
+            where = remove_data_al(self,save);
+             cr_assert(where==true, "should be true");
+             check =  get_index_al(self,2);
+              cr_assert(*check==11, "should be 11");
+            leng = self->length;
+            size_t cap = self-> capacity;
+           cr_assert(leng==3, "should be 3");
+           cr_assert(cap==4, "should be 4");
+}
+
+
 

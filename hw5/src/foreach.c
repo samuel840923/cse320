@@ -41,7 +41,6 @@ void *foreach_next(arraylist_t *self, void* data){
     }
    void *ret = NULL;
    size_t the_index =  get_data_al (self, data);
-
    if(the_index == UINT_MAX){
     pthread_mutex_lock(&(self->read_mutex));
         self->readcnt--;
@@ -50,11 +49,9 @@ void *foreach_next(arraylist_t *self, void* data){
         pthread_mutex_unlock(&(self->read_mutex));
        return NULL;
     }
-
 pthread_mutex_lock(&(self->mutex));
    size_t length = self->length;
 pthread_mutex_unlock(&(self->mutex));
-
    the_index++;
     if(the_index>=length){
         pthread_mutex_lock(&(self->read_mutex));
@@ -65,7 +62,6 @@ pthread_mutex_unlock(&(self->mutex));
         //pthread_key_delete(key);
         return NULL;
     }
-
     ret = get_index_al(self,the_index);
 
     if(ret == NULL){
@@ -78,6 +74,7 @@ pthread_mutex_unlock(&(self->mutex));
     }
     storage_t *size =  pthread_getspecific(key);
     if(size==NULL){
+
        return NULL;
     }
     else{
@@ -127,7 +124,6 @@ int32_t apply(arraylist_t *self, int32_t (*application)(void*)){
             memmove(base,value,elem_size);
             pthread_mutex_unlock(&(self->mutex));
            }
-
         }
         free(test);
     return ret;

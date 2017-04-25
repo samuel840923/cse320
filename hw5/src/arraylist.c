@@ -48,6 +48,10 @@ arraylist_t *new_al(size_t item_size){
 }
 
 size_t insert_al(arraylist_t *self, void* data){
+    if(self == NULL){
+       errno = EINVAL;
+        return UINT_MAX;
+    }
     pthread_mutex_lock(&(self->mutex));
     size_t curr_length = self->length;
     size_t curr_cap = self->capacity;
@@ -141,15 +145,15 @@ bool remove_data_al(arraylist_t *self, void *data){
      errno = EFAULT ;
          return false;
     }
-    pthread_mutex_lock(&(self->mutex));
     pthread_mutex_lock(&(self->foreach_mutex));
+     pthread_mutex_lock(&(self->mutex));
     size_t length = self->length;
     size_t elem_size = self->item_size;
     size_t cap = self->capacity;
     void* base = self->base;
     if(length==0||cap==0){
-     pthread_mutex_unlock(&(self->foreach_mutex));
      pthread_mutex_unlock(&(self->mutex));
+     pthread_mutex_unlock(&(self->foreach_mutex));
       errno = ENXIO;
         return false;
             }
@@ -160,14 +164,14 @@ bool remove_data_al(arraylist_t *self, void *data){
             self->length--;
              if(self->length == (cap/2) - 1)
                 resize_al(self);
-             pthread_mutex_unlock(&(self->foreach_mutex));
              pthread_mutex_unlock(&(self->mutex));
+              pthread_mutex_unlock(&(self->foreach_mutex));
             return true;
    }
    int index = getindex(self,data);
    if(index==-1){
-    pthread_mutex_unlock(&(self->foreach_mutex));
     pthread_mutex_unlock(&(self->mutex));
+     pthread_mutex_unlock(&(self->foreach_mutex));
     return false;
    }
 
@@ -178,8 +182,9 @@ bool remove_data_al(arraylist_t *self, void *data){
     self->length--;
     if(self->length == (cap/2) - 1)
         resize_al(self);
-    pthread_mutex_unlock(&(self->foreach_mutex));
+
     pthread_mutex_unlock(&(self->mutex));
+    pthread_mutex_unlock(&(self->foreach_mutex));
     return true;
 }
 
@@ -232,18 +237,28 @@ void *remove_index_al(arraylist_t *self, size_t index){
 void delete_al(arraylist_t *self, void (*free_item_func)(void*)){
 if(self==NULL){
     errno = EFAULT;
+
     return;
 }
-if(free_item_func==NULL){
-    free(self->base);
-    return;
-}
+
+pthread_mutex_lock(&(self->foreach_mutex));
 pthread_mutex_lock(&(self->mutex));
+
 if(self->capacity ==0){
     errno = EFAULT;
     pthread_mutex_unlock(&(self->mutex));
+    pthread_mutex_unlock(&(self->foreach_mutex));
     return;
 }
+
+if(free_item_func==NULL){
+    self->capacity =0;
+    free(self->base);
+     pthread_mutex_unlock(&(self->mutex));
+     pthread_mutex_unlock(&(self->foreach_mutex));
+    return;
+}
+
 size_t leng = self->length;
 void *base = self->base;
 size_t elem_size = self->item_size;
@@ -254,9 +269,11 @@ for(int i=0;i<leng;i++){
 }
 free(self->base);
 self->capacity =0;
+self->length=0;
 pthread_mutex_unlock(&(self->mutex));
-pthread_mutex_destroy(&(self->mutex));
-pthread_mutex_destroy(&(self->foreach_mutex));
+pthread_mutex_unlock(&(self->foreach_mutex));
+//pthread_mutex_destroy(&(self->mutex));
+//pthread_mutex_destroy(&(self->foreach_mutex));
 }
 
 int getindex(arraylist_t *self, void *data){
