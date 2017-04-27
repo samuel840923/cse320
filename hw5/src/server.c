@@ -37,9 +37,10 @@ void *apply_test(void* data);
 
 
 int main(int argc, char *argv[]){
+	/*
 	arraylist_t *test = new_al(sizeof(student_t));
 
-/*
+
 pthread_t tested[2000];
 	//pthread_t tested2[2000];
 //arraylist_t *test = new_al(sizeof(student_t));
@@ -62,7 +63,7 @@ for(int i=0;i<len;i++){
 	student_t *uu = get_index_al(test,i);
 	printf("the name %s\n",uu->name);
 }
-*/
+
 
 for(int i=0;i<100;i++){
 	char* tee = malloc(5);
@@ -95,7 +96,7 @@ for(int i=0;i<len;i++){
 	student_t *uu = get_index_al(test,i);
 	printf("the name %d\n",uu->id);
 }
-
+*/
 }
 void *testread_each(void* data){
 	arraylist_t *hi = data;
