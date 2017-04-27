@@ -13,7 +13,7 @@ static bool resize_al(arraylist_t* self){
     size_t item_size = self->item_size;
     void *curr_base = self->base;
     if(curr_cap == curr_length){
-        self->base = realloc(curr_base,curr_cap*2*item_size);
+        self->base = realloc(curr_base,(curr_cap*2)*item_size);
         curr_base = self->base;
          curr_cap = curr_cap*2;
          self->capacity = curr_cap;
@@ -79,20 +79,25 @@ return curr_length;
 size_t get_data_al(arraylist_t *self, void *data){
     if(self==NULL){
         errno = EINVAL;
-        return UINT_MAX ;
+        return UINT_MAX;
     }
     pthread_mutex_lock(&(self->get_mutex));
-    size_t cap = self->capacity;
-    if(cap==0){
-        pthread_mutex_unlock(&(self->get_mutex));
-         errno = EINVAL;
-        return UINT_MAX ;
-    }
+
     self->getcnt++;
     if(self->getcnt==1)
         pthread_mutex_lock(&(self->mutex));
     pthread_mutex_unlock(&(self->get_mutex));
 
+    size_t cap = self->capacity;
+     if(cap==0){
+         pthread_mutex_lock(&(self->get_mutex));
+            self->getcnt--;
+             if(self->getcnt==0)
+                 pthread_mutex_unlock(&(self->mutex));
+         pthread_mutex_unlock(&(self->get_mutex));
+         errno = EINVAL;
+        return UINT_MAX ;
+    }
     if(data==NULL){
         pthread_mutex_lock(&(self->get_mutex));
          self->getcnt--;
@@ -101,6 +106,7 @@ size_t get_data_al(arraylist_t *self, void *data){
          pthread_mutex_unlock(&(self->get_mutex));
         return 0;
     }
+
     int index = getindex(self,data);
     if(index==-1){
         pthread_mutex_lock(&(self->get_mutex));
@@ -133,7 +139,7 @@ void *get_index_al(arraylist_t *self, size_t index){
          pthread_mutex_lock(&(self->mutex));
      pthread_mutex_unlock(&(self->get_mutex));
     size_t length = self->length;
-    void *baseArray = self -> base;
+    void *baseArray = self->base;
      size_t elem_size = self->item_size;
      size_t cap = self->capacity;
     if(length==0||cap==0){
@@ -150,6 +156,7 @@ void *get_index_al(arraylist_t *self, size_t index){
     baseArray = (char*)baseArray+move;
     void * orig_data = malloc(elem_size);
     memcpy(orig_data,baseArray,elem_size);
+
      pthread_mutex_lock(&(self->get_mutex));
              self->getcnt--;
                 if(self->getcnt==0)
@@ -268,7 +275,6 @@ void *remove_index_al(arraylist_t *self, size_t index){
 void delete_al(arraylist_t *self, void (*free_item_func)(void*)){
 if(self==NULL){
     errno = EFAULT;
-
     return;
 }
 
@@ -296,6 +302,7 @@ for(int i=0;i<leng;i++){
     size_t move = elem_size*i;
     void *freebase = (char*)base+move;
     free_item_func(freebase);
+
 }
 free(self->base);
 self->capacity =0;

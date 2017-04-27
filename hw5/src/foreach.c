@@ -12,9 +12,12 @@ void *foreach_init(arraylist_t *self){
     if(self ==NULL){
         return NULL;
     }
+     pthread_mutex_lock(&(self->foreach_mutex));
     if(self->capacity==0){
+         pthread_mutex_unlock(&(self->foreach_mutex));
         return NULL;
     }
+     pthread_mutex_unlock(&(self->foreach_mutex));
     void *ret = NULL;
     ret = get_index_al (self,0);
     if(ret == NULL){
@@ -29,8 +32,9 @@ void *foreach_init(arraylist_t *self){
 
     pthread_mutex_lock(&(self->read_mutex));
     self->readcnt++;
-    if(self->readcnt==1)
+    if(self->readcnt==1){
        pthread_mutex_lock(&(self->foreach_mutex));
+    }
     pthread_mutex_unlock(&(self->read_mutex));
     return ret;
 }
@@ -75,7 +79,6 @@ pthread_mutex_unlock(&(self->mutex));
     }
     storage_t *size =  pthread_getspecific(key);
     if(size==NULL){
-
        return NULL;
     }
     else{
@@ -112,14 +115,22 @@ bool foreach_break_f(){
 int32_t apply(arraylist_t *self, int32_t (*application)(void*)){
     int32_t ret = 0;
     size_t elem_size = self->item_size;
+    pthread_mutex_lock(&(self->mutex));
+    if(self->capacity==0){
+        pthread_mutex_unlock(&(self->mutex));
+         return -1;
+    }
+    pthread_mutex_unlock(&(self->mutex));
+
     void* test = malloc(elem_size);
         foreach(void, value, self){
-            memcpy(test,value,elem_size);
            if( application(test)==0){
             pthread_mutex_lock(&(self->mutex));
             application(value);
             void* base = self->base;
             size_t index = foreach_index();
+             if(self->capacity==0)
+                return -1;
             size_t move = index*elem_size;
             base = (char*)base + move;
             memcpy(base,value,elem_size);
