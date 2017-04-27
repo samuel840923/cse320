@@ -302,7 +302,6 @@ for(int i=0;i<leng;i++){
     size_t move = elem_size*i;
     void *freebase = (char*)base+move;
     free_item_func(freebase);
-
 }
 free(self->base);
 self->capacity =0;
