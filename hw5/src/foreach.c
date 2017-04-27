@@ -40,6 +40,7 @@ void *foreach_next(arraylist_t *self, void* data){
         return NULL;
     }
    void *ret = NULL;
+
    size_t the_index =  get_data_al (self, data);
    if(the_index == UINT_MAX){
     pthread_mutex_lock(&(self->read_mutex));
@@ -121,7 +122,7 @@ int32_t apply(arraylist_t *self, int32_t (*application)(void*)){
             size_t index = foreach_index();
             size_t move = index*elem_size;
             base = (char*)base + move;
-            memmove(base,value,elem_size);
+            memcpy(base,value,elem_size);
             pthread_mutex_unlock(&(self->mutex));
            }
         }

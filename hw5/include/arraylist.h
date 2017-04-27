@@ -49,4 +49,5 @@ void delete_al(arraylist_t *self, void (*free_item_func)(void*));
 int getindex(arraylist_t *self, void *data);
 int shiftleft (arraylist_t *self, int index);
 
+
 #endif

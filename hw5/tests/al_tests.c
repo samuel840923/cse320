@@ -60,6 +60,8 @@ Test(al_suite, 0_creation, .timeout=2){
     arraylist_t *self = new_al(sizeof(int));
      int a =0;
      int*b =&a;
+   size_t check =   insert_al(NULL,b);
+   cr_assert(check==UINT_MAX,"no good");
      insert_al(self,b);
      a = 8;
      insert_al(self,b);
@@ -84,6 +86,11 @@ Test(al_suite, 0_creation, .timeout=2){
      test = get_index_al(self,0);
      cr_assert(*test==0,"no good");
      cr_assert(self->capacity==8,"no good");
+    size_t test2 = get_data_al(self,NULL);
+     cr_assert(test2==0,"no good");
+        test = get_index_al(self,100);
+     cr_assert(*test==12,"no good");
+
 }
 
 Test(al_suite, 1_deletion, .timeout=2){
@@ -120,13 +127,17 @@ Test(al_suite, 1_deletion, .timeout=2){
          cr_assert(*test==10, "should be 9");
        cr_assert(self->capacity==4, "should be 4");
        test = remove_index_al(self,0);
-       test = remove_index_al(self,0);
+      bool test1 = remove_data_al(self,NULL);
+      cr_assert(test1==true, "should be 4");
        cr_assert(self->capacity==4, "should be 4");
        cr_assert(self->length==1, "cannot find 2");
        test = remove_index_al(self,0);
          cr_assert(self->capacity==4, "should be 4");
          test = remove_index_al(self,0);
          cr_assert(test==NULL, "should be no more");
+         test = remove_index_al(self,0);
+         cr_assert(test==NULL, "should be no more");
+
 }
 
 Test(al_suite, 2_insertion, .timeout=2, .init=setup, .fini=teardown){
@@ -217,6 +228,24 @@ Test(al_suite, 4_insertion, .timeout=2, .init=setup, .fini=teardown){
            cr_assert(leng==3, "should be 3");
            cr_assert(cap==4, "should be 4");
 }
-
+Test(al_suite, 5_insertion, .timeout=2, .init=setup, .fini=teardown){
+  arraylist_t *self = new_al(sizeof(int));
+     int a =0;
+     int*b =&a;
+     insert_al(self,b);
+     a = 8;
+     insert_al(self,b);
+     a = 9;
+     insert_al(self,b);
+     a = 10;
+     insert_al(self,b);
+     a = 11;
+     insert_al(self,b);
+     a = 12;
+     insert_al(self,b);
+     int* get = remove_index_al(self,100);
+     cr_assert(*get==12,"no equal to 12");
+       cr_assert(self->length==5,"no equal to 4");
+}
 
 

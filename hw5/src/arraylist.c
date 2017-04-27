@@ -45,8 +45,6 @@ arraylist_t *new_al(size_t item_size){
     pthread_mutex_init(&(ret->foreach_mutex), NULL);
     pthread_mutex_init(&(ret->read_mutex), NULL);
     pthread_mutex_init(&(ret->get_mutex), NULL);
-
-
     return ret;
 }
 
@@ -104,7 +102,6 @@ size_t get_data_al(arraylist_t *self, void *data){
         return 0;
     }
     int index = getindex(self,data);
-    pthread_mutex_unlock(&(self->mutex));
     if(index==-1){
         pthread_mutex_lock(&(self->get_mutex));
          self->getcnt--;
@@ -292,7 +289,6 @@ if(free_item_func==NULL){
      pthread_mutex_unlock(&(self->foreach_mutex));
     return;
 }
-
 size_t leng = self->length;
 void *base = self->base;
 size_t elem_size = self->item_size;
@@ -320,6 +316,7 @@ int getindex(arraylist_t *self, void *data){
             return i;
         }
     }
+
     return -1;
 }
 int shiftleft (arraylist_t *self, int index){
