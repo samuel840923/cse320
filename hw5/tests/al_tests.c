@@ -247,5 +247,52 @@ Test(al_suite, 5_insertion, .timeout=2, .init=setup, .fini=teardown){
      cr_assert(*get==12,"no equal to 12");
        cr_assert(self->length==5,"no equal to 4");
 }
+Test(al_suite, 6_extreme, .timeout=2, .init=setup, .fini=teardown){
+     arraylist_t *self = new_al(sizeof(int));
+     int a =0;
+     int*b =&a;
+     insert_al(self,b);
+     a = 1;
+     insert_al(self,b);
+     a = 2;
+     insert_al(self,b);
+     a = 3;
+     insert_al(self,b);
+     a = 4;
+     insert_al(self,b);
+     a = 5;
+     insert_al(self,b);
+      a = 6;
+     insert_al(self,b);
+      a = 7;
+     insert_al(self,b);
+       a = 8;
+     insert_al(self,b);
+      insert_al(self,NULL);
+      insert_al(NULL,NULL);
+     cr_assert(self->length==9,"not eight");
+     cr_assert(self->capacity==16,"not 16");
+     int test = get_data_al(self,NULL);
+      cr_assert(test==0,"not 0");
+      int* nogood;
+      int no = 100;
+      nogood=&no;
+       test = get_data_al(self,nogood);
+      cr_assert(test==UINT_MAX,"not 0");
+      int* good = get_index_al(self,100);
+       cr_assert(*good==8,"not 8");
+      bool bo =  remove_data_al(NULL,b);
+        cr_assert(bo==false,"not false");
+         cr_assert(self->length==9,"not eight");
+     cr_assert(self->capacity==16,"not 16");
+      bo =  remove_data_al(self,NULL);
+        cr_assert(bo==true,"not false");
+         good = get_index_al(self,1);
+         cr_assert(*good==2,"not 2");
+          bo =  remove_data_al(self,nogood);
+           cr_assert(bo==false,"not false");
+         cr_assert(self->length==8,"not eight");
+
+}
 
 

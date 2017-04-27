@@ -111,6 +111,10 @@ bool foreach_break_f(){
 }
 
 int32_t apply(arraylist_t *self, int32_t (*application)(void*)){
+    if(application == NULL)
+        return -1;
+    if(self==NULL)
+        return -1;
     int32_t ret = 0;
     size_t elem_size = self->item_size;
     pthread_mutex_lock(&(self->mutex));

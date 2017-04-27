@@ -53,6 +53,10 @@ size_t insert_al(arraylist_t *self, void* data){
        errno = EINVAL;
         return UINT_MAX;
     }
+    if(data==NULL){
+         errno = EINVAL;
+        return UINT_MAX;
+    }
     pthread_mutex_lock(&(self->mutex));
     size_t curr_length = self->length;
     size_t curr_cap = self->capacity;

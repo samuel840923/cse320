@@ -39,18 +39,13 @@ void *apply_test(void* data);
 int main(int argc, char *argv[]){
 	arraylist_t *test = new_al(sizeof(student_t));
 
-for(int i=0;i<100;i++){
-	char* tee = malloc(5);
-	memcpy(tee,"sam",3);
-	student_t inser = {tee,i,3.0};
-	insert_al(test,&inser);
-}
+/*
 pthread_t tested[2000];
 	//pthread_t tested2[2000];
 //arraylist_t *test = new_al(sizeof(student_t));
 
 for(int i=0;i<1000;i++){
-	pthread_create(&tested[i],NULL,testread_each,test);
+	pthread_create(&tested[i],NULL,testcode_write,test);
 }
 for(int i=1000;i<1500;i++)
 pthread_create(&tested[i],NULL,testcode_remove,test);
@@ -63,8 +58,12 @@ size_t len = test->length;
 
 printf("end\n");
 printf("the length is %zu\n",len);
+for(int i=0;i<len;i++){
+	student_t *uu = get_index_al(test,i);
+	printf("the name %s\n",uu->name);
+}
+*/
 
-/*
 for(int i=0;i<100;i++){
 	char* tee = malloc(5);
 	memcpy(tee,"sam",3);
@@ -72,13 +71,13 @@ for(int i=0;i<100;i++){
 	insert_al(test,&inser);
 }
 
-pthread_t tid,tid4,tid6,tid1,tid2;
+pthread_t tid,tid4,tid6,tid1,tid2,tid5;
 
 pthread_create(&tid,NULL,testread_each1,test);
 pthread_create(&tid1,NULL,testread_each,test);
 pthread_create(&tid2,NULL,delet_test,test);
 pthread_create(&tid4,NULL,apply_test,test);
-//pthread_create(&tid5,NULL,testcode_remove,test);
+pthread_create(&tid5,NULL,testcode_remove,test);
 pthread_create(&tid6,NULL,testcode_write,test);
 
 pthread_join(tid,NULL);
@@ -86,10 +85,17 @@ pthread_join(tid1,NULL);
 pthread_join(tid2,NULL);
 
 pthread_join(tid4,NULL);
-//pthread_join(tid5,NULL);
+pthread_join(tid5,NULL);
 pthread_join(tid6,NULL);
+size_t len = test->length;
 
-*/
+printf("end\n");
+printf("the length is %zu\n",len);
+for(int i=0;i<len;i++){
+	student_t *uu = get_index_al(test,i);
+	printf("the name %d\n",uu->id);
+}
+
 }
 void *testread_each(void* data){
 	arraylist_t *hi = data;
