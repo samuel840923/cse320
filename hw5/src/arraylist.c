@@ -34,6 +34,10 @@ static bool resize_al(arraylist_t* self){
 }
 
 arraylist_t *new_al(size_t item_size){
+    if(item_size==0){
+         errno = EINVAL;
+        return NULL;
+    }
     arraylist_t *ret = (arraylist_t*) malloc(sizeof(arraylist_t));
     ret -> capacity = INIT_SZ;
     ret -> length =0;
