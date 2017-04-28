@@ -37,24 +37,30 @@ void *apply_test(void* data);
 
 
 int main(int argc, char *argv[]){
-	/*
+/*
 	arraylist_t *test = new_al(sizeof(student_t));
 
-
+for(int i=0;i<100;i++){
+	char* tee = malloc(5);
+	memcpy(tee,"sam",3);
+	student_t inser = {tee,i,3.0};
+	insert_al(test,&inser);
+}
 pthread_t tested[2000];
 	//pthread_t tested2[2000];
 //arraylist_t *test = new_al(sizeof(student_t));
 
-for(int i=0;i<1000;i++){
-	pthread_create(&tested[i],NULL,testcode_write,test);
+for(int i=0;i<100;i++)
+pthread_create(&tested[i],NULL,delet_test,test);
+for(int i=100;i<1000;i++){
+	pthread_create(&tested[i],NULL,apply_test,test);
 }
-for(int i=1000;i<1500;i++)
-pthread_create(&tested[i],NULL,testcode_remove,test);
 
-for(int i=0;i<1500;i++){
+for(int i=0;i<1000;i++){
 	pthread_join(tested[i],NULL);
 
 }
+remove_index_al(test,0);
 size_t len = test->length;
 
 printf("end\n");
@@ -157,7 +163,6 @@ int numbers(void* data){
 }
 void *testcode_remove(void* data){
 	arraylist_t *hi = data;
-
 	remove_index_al(hi,0);
 	return NULL;
 
